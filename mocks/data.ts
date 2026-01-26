@@ -147,13 +147,26 @@ export const MOCK_ACTIVITIES: Activity[] = [
   },
 ];
 
-export const MOCK_RANKINGS: RankingEntry[] = [
-  { rank: 1, userId: 'user-3', userName: 'Marathon King', points: 5200, territoriesCount: 15, level: 8 },
-  { rank: 2, userId: 'user-4', userName: 'Swift Runner', points: 4100, territoriesCount: 12, level: 7 },
-  { rank: 3, userId: 'user-2', userName: 'Speed Demon', points: 3500, territoriesCount: 10, level: 6 },
-  { rank: 4, userId: 'user-1', userName: 'Runner Pro', points: 2450, territoriesCount: 8, level: 5 },
-  { rank: 5, userId: 'user-5', userName: 'Trail Blazer', points: 2100, territoriesCount: 7, level: 5 },
-  { rank: 6, userId: 'user-6', userName: 'Urban Legend', points: 1850, territoriesCount: 6, level: 4 },
-  { rank: 7, userId: 'user-7', userName: 'Street King', points: 1600, territoriesCount: 5, level: 4 },
-  { rank: 8, userId: 'user-8', userName: 'Path Seeker', points: 1200, territoriesCount: 4, level: 3 },
+export const MOCK_RANKINGS_GLOBAL: RankingEntry[] = [
+  { rank: 1, userId: 'user-10', userName: 'Global Master', points: 52000, territoriesCount: 150, level: 15, country: 'USA', countryFlag: '🇺🇸' },
+  { rank: 2, userId: 'user-11', userName: 'World Runner', points: 48000, territoriesCount: 140, level: 14, country: 'Germany', countryFlag: '🇩🇪' },
+  { rank: 3, userId: 'user-12', userName: 'Terra King', points: 45000, territoriesCount: 130, level: 14, country: 'Japan', countryFlag: '🇯🇵' },
+  { rank: 4, userId: 'user-13', userName: 'Map Conqueror', points: 42000, territoriesCount: 120, level: 13, country: 'UK', countryFlag: '🇬🇧' },
+  { rank: 5, userId: 'user-14', userName: 'Sprint Legend', points: 38000, territoriesCount: 110, level: 12, country: 'France', countryFlag: '🇫🇷' },
+  { rank: 6, userId: 'user-15', userName: 'Zone Hunter', points: 35000, territoriesCount: 100, level: 11, country: 'Brazil', countryFlag: '🇧🇷' },
+  { rank: 7, userId: 'user-16', userName: 'Territory Boss', points: 32000, territoriesCount: 95, level: 11, country: 'Australia', countryFlag: '🇦🇺' },
+  { rank: 8, userId: 'user-17', userName: 'Run Emperor', points: 29000, territoriesCount: 88, level: 10, country: 'Canada', countryFlag: '🇨🇦' },
 ];
+
+export const MOCK_RANKINGS_NATIONAL: RankingEntry[] = [
+  { rank: 1, userId: 'user-3', userName: 'Marathon King', points: 5200, territoriesCount: 15, level: 8, country: 'Brazil', countryFlag: '🇧🇷' },
+  { rank: 2, userId: 'user-4', userName: 'Swift Runner', points: 4100, territoriesCount: 12, level: 7, country: 'Brazil', countryFlag: '🇧🇷' },
+  { rank: 3, userId: 'user-2', userName: 'Speed Demon', points: 3500, territoriesCount: 10, level: 6, country: 'Brazil', countryFlag: '🇧🇷' },
+  { rank: 4, userId: 'user-1', userName: 'Runner Pro', points: 2450, territoriesCount: 8, level: 5, country: 'Brazil', countryFlag: '🇧🇷' },
+  { rank: 5, userId: 'user-5', userName: 'Trail Blazer', points: 2100, territoriesCount: 7, level: 5, country: 'Brazil', countryFlag: '🇧🇷' },
+  { rank: 6, userId: 'user-6', userName: 'Urban Legend', points: 1850, territoriesCount: 6, level: 4, country: 'Brazil', countryFlag: '🇧🇷' },
+  { rank: 7, userId: 'user-7', userName: 'Street King', points: 1600, territoriesCount: 5, level: 4, country: 'Brazil', countryFlag: '🇧🇷' },
+  { rank: 8, userId: 'user-8', userName: 'Path Seeker', points: 1200, territoriesCount: 4, level: 3, country: 'Brazil', countryFlag: '🇧🇷' },
+];
+
+export const MOCK_RANKINGS = MOCK_RANKINGS_NATIONAL;

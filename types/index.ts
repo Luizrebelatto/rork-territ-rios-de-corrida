@@ -94,4 +94,6 @@ export interface RankingEntry {
   points: number;
   territoriesCount: number;
   level: number;
+  country?: string;
+  countryFlag?: string;
 }

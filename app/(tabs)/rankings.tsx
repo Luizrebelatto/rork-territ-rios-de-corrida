@@ -1,20 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Medal, Crown, MapPin, Zap } from 'lucide-react-native';
+import { Medal, Crown, MapPin, Zap, Globe, Flag, Users } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { RankingEntry } from '@/types';
+import { MOCK_RANKINGS_GLOBAL, MOCK_RANKINGS_NATIONAL } from '@/mocks/data';
 
-type TabType = 'global' | 'groups';
+type TabType = 'mundial' | 'nacional' | 'grupos';
 
 export default function RankingsScreen() {
   const insets = useSafeAreaInsets();
-  const { rankings, groups, user } = useApp();
-  const [activeTab, setActiveTab] = useState<TabType>('global');
+  const { groups, user } = useApp();
+  const [activeTab, setActiveTab] = useState<TabType>('mundial');
 
+  const rankings = activeTab === 'mundial' ? MOCK_RANKINGS_GLOBAL : MOCK_RANKINGS_NATIONAL;
   const userRank = rankings.find(r => r.userId === user?.id);
+
+  const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
+    { key: 'mundial', label: 'Mundial', icon: <Globe size={14} color={activeTab === 'mundial' ? Colors.background : Colors.textSecondary} /> },
+    { key: 'nacional', label: 'Nacional', icon: <Flag size={14} color={activeTab === 'nacional' ? Colors.background : Colors.textSecondary} /> },
+    { key: 'grupos', label: 'Grupos', icon: <Users size={14} color={activeTab === 'grupos' ? Colors.background : Colors.textSecondary} /> },
+  ];
 
   return (
     <View style={styles.container}>
@@ -24,18 +32,20 @@ export default function RankingsScreen() {
       >
         <Text style={styles.title}>Rankings</Text>
         <View style={styles.tabs}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'global' && styles.activeTab]}
-            onPress={() => setActiveTab('global')}
-          >
-            <Text style={[styles.tabText, activeTab === 'global' && styles.activeTabText]}>Global</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'groups' && styles.activeTab]}
-            onPress={() => setActiveTab('groups')}
-          >
-            <Text style={[styles.tabText, activeTab === 'groups' && styles.activeTabText]}>Groups</Text>
-          </TouchableOpacity>
+          {tabs.map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tab, activeTab === tab.key && styles.activeTab]}
+              onPress={() => setActiveTab(tab.key)}
+            >
+              <View style={styles.tabContent}>
+                {tab.icon}
+                <Text style={[styles.tabText, activeTab === tab.key && styles.activeTabText]}>
+                  {tab.label}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
       </LinearGradient>
 
@@ -44,18 +54,18 @@ export default function RankingsScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {activeTab === 'global' && (
+        {(activeTab === 'mundial' || activeTab === 'nacional') && (
           <>
             <View style={styles.podium}>
               {rankings.slice(0, 3).map((entry, index) => (
-                <PodiumItem key={entry.userId} entry={entry} position={index + 1} />
+                <PodiumItem key={entry.userId} entry={entry} position={index + 1} showFlag={activeTab === 'mundial'} />
               ))}
             </View>
 
             {userRank && userRank.rank > 3 && (
               <View style={styles.userRankCard}>
-                <Text style={styles.userRankLabel}>Your Ranking</Text>
-                <RankingRow entry={userRank} isCurrentUser />
+                <Text style={styles.userRankLabel}>Sua Posição</Text>
+                <RankingRow entry={userRank} isCurrentUser showFlag={activeTab === 'mundial'} />
               </View>
             )}
 
@@ -65,36 +75,49 @@ export default function RankingsScreen() {
                   key={entry.userId} 
                   entry={entry}
                   isCurrentUser={entry.userId === user?.id}
+                  showFlag={activeTab === 'mundial'}
                 />
               ))}
             </View>
           </>
         )}
 
-        {activeTab === 'groups' && (
+        {activeTab === 'grupos' && (
           <View style={styles.groupsContainer}>
-            {groups.map((group, index) => (
-              <View key={group.id} style={styles.groupCard}>
-                <View style={styles.groupRank}>
-                  <Text style={styles.groupRankText}>#{index + 1}</Text>
-                </View>
-                <View style={[styles.groupColor, { backgroundColor: group.color }]} />
-                <View style={styles.groupInfo}>
-                  <Text style={styles.groupName}>{group.name}</Text>
-                  <Text style={styles.groupMembers}>{group.memberCount} members</Text>
-                </View>
-                <View style={styles.groupStats}>
-                  <View style={styles.groupStat}>
-                    <Zap size={14} color={Colors.primary} />
-                    <Text style={styles.groupStatValue}>{group.totalPoints}</Text>
-                  </View>
-                  <View style={styles.groupStat}>
-                    <MapPin size={14} color={Colors.secondary} />
-                    <Text style={styles.groupStatValue}>{group.territoriesCount}</Text>
-                  </View>
-                </View>
+            {groups.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Users size={48} color={Colors.textTertiary} />
+                <Text style={styles.emptyTitle}>Nenhum grupo ainda</Text>
+                <Text style={styles.emptySubtitle}>Entre ou crie um grupo para competir!</Text>
               </View>
-            ))}
+            ) : (
+              groups.map((group, index) => (
+                <View key={group.id} style={styles.groupCard}>
+                  <View style={[styles.groupRankBadge, index < 3 && styles.topGroupBadge]}>
+                    {index === 0 ? (
+                      <Crown size={16} color={Colors.warning} fill={Colors.warning} />
+                    ) : (
+                      <Text style={[styles.groupRankText, index < 3 && styles.topGroupRankText]}>#{index + 1}</Text>
+                    )}
+                  </View>
+                  <View style={[styles.groupColor, { backgroundColor: group.color }]} />
+                  <View style={styles.groupInfo}>
+                    <Text style={styles.groupName}>{group.name}</Text>
+                    <Text style={styles.groupMembers}>{group.memberCount} membros</Text>
+                  </View>
+                  <View style={styles.groupStats}>
+                    <View style={styles.groupStat}>
+                      <Zap size={14} color={Colors.primary} />
+                      <Text style={styles.groupStatValue}>{group.totalPoints.toLocaleString()}</Text>
+                    </View>
+                    <View style={styles.groupStat}>
+                      <MapPin size={14} color={Colors.secondary} />
+                      <Text style={styles.groupStatValue}>{group.territoriesCount}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
           </View>
         )}
       </ScrollView>
@@ -102,7 +125,7 @@ export default function RankingsScreen() {
   );
 }
 
-function PodiumItem({ entry, position }: { entry: RankingEntry; position: number }) {
+function PodiumItem({ entry, position, showFlag }: { entry: RankingEntry; position: number; showFlag?: boolean }) {
   const height = position === 1 ? 100 : position === 2 ? 80 : 60;
   const iconColor = position === 1 ? Colors.warning : position === 2 ? '#C0C0C0' : '#CD7F32';
   const Icon = position === 1 ? Crown : Medal;
@@ -122,7 +145,10 @@ function PodiumItem({ entry, position }: { entry: RankingEntry; position: number
         </View>
       </View>
       <Text style={styles.podiumName} numberOfLines={1}>{entry.userName}</Text>
-      <Text style={styles.podiumPoints}>{entry.points} pts</Text>
+      {showFlag && entry.countryFlag && (
+        <Text style={styles.podiumFlag}>{entry.countryFlag}</Text>
+      )}
+      <Text style={styles.podiumPoints}>{entry.points.toLocaleString()} pts</Text>
       <LinearGradient
         colors={[iconColor + '40', iconColor + '20']}
         style={[styles.podiumBar, { height }]}
@@ -133,7 +159,7 @@ function PodiumItem({ entry, position }: { entry: RankingEntry; position: number
   );
 }
 
-function RankingRow({ entry, isCurrentUser = false }: { entry: RankingEntry; isCurrentUser?: boolean }) {
+function RankingRow({ entry, isCurrentUser = false, showFlag = false }: { entry: RankingEntry; isCurrentUser?: boolean; showFlag?: boolean }) {
   return (
     <View style={[styles.rankingRow, isCurrentUser && styles.currentUserRow]}>
       <View style={styles.rankBadge}>
@@ -149,12 +175,17 @@ function RankingRow({ entry, isCurrentUser = false }: { entry: RankingEntry; isC
         )}
       </View>
       <View style={styles.rankInfo}>
-        <Text style={styles.rankName}>{entry.userName}</Text>
-        <Text style={styles.rankLevel}>Level {entry.level}</Text>
+        <View style={styles.rankNameRow}>
+          <Text style={styles.rankName}>{entry.userName}</Text>
+          {showFlag && entry.countryFlag && (
+            <Text style={styles.rankFlag}>{entry.countryFlag}</Text>
+          )}
+        </View>
+        <Text style={styles.rankLevel}>Nível {entry.level}</Text>
       </View>
       <View style={styles.rankStats}>
-        <Text style={styles.rankPoints}>{entry.points}</Text>
-        <Text style={styles.rankPointsLabel}>points</Text>
+        <Text style={styles.rankPoints}>{entry.points.toLocaleString()}</Text>
+        <Text style={styles.rankPointsLabel}>pontos</Text>
       </View>
     </View>
   );
@@ -190,8 +221,13 @@ const styles = StyleSheet.create({
   activeTab: {
     backgroundColor: Colors.primary,
   },
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   tabText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
   },
@@ -254,6 +290,10 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 2,
     maxWidth: 80,
+  },
+  podiumFlag: {
+    fontSize: 16,
+    marginBottom: 2,
   },
   podiumPoints: {
     fontSize: 12,
@@ -337,10 +377,18 @@ const styles = StyleSheet.create({
   rankInfo: {
     flex: 1,
   },
+  rankNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   rankName: {
     fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.text,
+  },
+  rankFlag: {
+    fontSize: 14,
   },
   rankLevel: {
     fontSize: 13,
@@ -361,6 +409,22 @@ const styles = StyleSheet.create({
   groupsContainer: {
     padding: 20,
   },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 4,
+  },
   groupCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -369,14 +433,25 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
-  groupRank: {
+  groupRankBadge: {
     width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.backgroundSecondary,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  topGroupBadge: {
+    backgroundColor: Colors.warning + '20',
   },
   groupRankText: {
     fontSize: 14,
     fontWeight: '700' as const,
     color: Colors.textSecondary,
+  },
+  topGroupRankText: {
+    color: Colors.warning,
   },
   groupColor: {
     width: 8,
