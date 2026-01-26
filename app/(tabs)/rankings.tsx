@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Medal, Crown, MapPin, Zap, Globe, Flag, Users } from 'lucide-react-native';
+import { Medal, Crown, MapPin, Zap, Globe, Flag, Users, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
-import { RankingEntry } from '@/types';
+import { RankingEntry, Group } from '@/types';
 import { MOCK_RANKINGS_GLOBAL, MOCK_RANKINGS_NATIONAL } from '@/mocks/data';
 
 type TabType = 'mundial' | 'nacional' | 'grupos';
@@ -14,9 +14,26 @@ export default function RankingsScreen() {
   const insets = useSafeAreaInsets();
   const { groups, user } = useApp();
   const [activeTab, setActiveTab] = useState<TabType>('mundial');
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
   const rankings = activeTab === 'mundial' ? MOCK_RANKINGS_GLOBAL : MOCK_RANKINGS_NATIONAL;
   const userRank = rankings.find(r => r.userId === user?.id);
+
+  const groupRankings = useMemo((): RankingEntry[] => {
+    if (!selectedGroup) return [];
+    return selectedGroup.members
+      .sort((a, b) => b.points - a.points)
+      .map((member, index) => ({
+        rank: index + 1,
+        userId: member.userId,
+        userName: member.userName,
+        points: member.points,
+        territoriesCount: Math.floor(member.points / 200),
+        level: Math.floor(member.points / 500) + 1,
+      }));
+  }, [selectedGroup]);
+
+  const groupUserRank = groupRankings.find(r => r.userId === user?.id);
 
   const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
     { key: 'mundial', label: 'Mundial', icon: <Globe size={14} color={activeTab === 'mundial' ? Colors.background : Colors.textSecondary} /> },
@@ -82,7 +99,7 @@ export default function RankingsScreen() {
           </>
         )}
 
-        {activeTab === 'grupos' && (
+        {activeTab === 'grupos' && !selectedGroup && (
           <View style={styles.groupsContainer}>
             {groups.length === 0 ? (
               <View style={styles.emptyState}>
@@ -92,7 +109,12 @@ export default function RankingsScreen() {
               </View>
             ) : (
               groups.map((group, index) => (
-                <View key={group.id} style={styles.groupCard}>
+                <TouchableOpacity 
+                  key={group.id} 
+                  style={styles.groupCard}
+                  onPress={() => setSelectedGroup(group)}
+                  activeOpacity={0.7}
+                >
                   <View style={[styles.groupRankBadge, index < 3 && styles.topGroupBadge]}>
                     {index === 0 ? (
                       <Crown size={16} color={Colors.warning} fill={Colors.warning} />
@@ -115,10 +137,57 @@ export default function RankingsScreen() {
                       <Text style={styles.groupStatValue}>{group.territoriesCount}</Text>
                     </View>
                   </View>
-                </View>
+                  <ChevronRight size={20} color={Colors.textTertiary} />
+                </TouchableOpacity>
               ))
             )}
           </View>
+        )}
+
+        {activeTab === 'grupos' && selectedGroup && (
+          <>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => setSelectedGroup(null)}
+            >
+              <ChevronLeft size={20} color={Colors.primary} />
+              <Text style={styles.backButtonText}>Voltar aos grupos</Text>
+            </TouchableOpacity>
+
+            <View style={styles.selectedGroupHeader}>
+              <View style={[styles.selectedGroupColor, { backgroundColor: selectedGroup.color }]} />
+              <View style={styles.selectedGroupInfo}>
+                <Text style={styles.selectedGroupName}>{selectedGroup.name}</Text>
+                <Text style={styles.selectedGroupMembers}>{selectedGroup.memberCount} membros • {selectedGroup.totalPoints.toLocaleString()} pts</Text>
+              </View>
+            </View>
+
+            {groupRankings.length > 0 && (
+              <View style={styles.podium}>
+                {groupRankings.slice(0, 3).map((entry, index) => (
+                  <PodiumItem key={entry.userId} entry={entry} position={index + 1} showFlag={false} />
+                ))}
+              </View>
+            )}
+
+            {groupUserRank && groupUserRank.rank > 3 && (
+              <View style={styles.userRankCard}>
+                <Text style={styles.userRankLabel}>Sua Posição</Text>
+                <RankingRow entry={groupUserRank} isCurrentUser showFlag={false} />
+              </View>
+            )}
+
+            <View style={styles.listContainer}>
+              {groupRankings.slice(3).map((entry) => (
+                <RankingRow 
+                  key={entry.userId} 
+                  entry={entry}
+                  isCurrentUser={entry.userId === user?.id}
+                  showFlag={false}
+                />
+              ))}
+            </View>
+          </>
         )}
       </ScrollView>
     </View>
@@ -484,5 +553,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as const,
     color: Colors.text,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 4,
+  },
+  backButtonText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.primary,
+  },
+  selectedGroupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+  },
+  selectedGroupColor: {
+    width: 6,
+    height: 48,
+    borderRadius: 3,
+    marginRight: 14,
+  },
+  selectedGroupInfo: {
+    flex: 1,
+  },
+  selectedGroupName: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  selectedGroupMembers: {
+    fontSize: 14,
+    color: Colors.textSecondary,
   },
 });
