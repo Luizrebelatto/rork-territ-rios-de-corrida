@@ -30,6 +30,19 @@ function RootLayoutNav() {
           gestureEnabled: true,
         }} 
       />
+      <Stack.Screen 
+        name="run-summary" 
+        options={{ 
+          gestureEnabled: false,
+          animation: 'fade',
+        }} 
+      />
+      <Stack.Screen 
+        name="history" 
+        options={{ 
+          gestureEnabled: true,
+        }} 
+      />
     </Stack>
   );
 }

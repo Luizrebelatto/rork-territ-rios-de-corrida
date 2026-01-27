@@ -97,3 +97,23 @@ export interface RankingEntry {
   country?: string;
   countryFlag?: string;
 }
+
+export interface WeeklyGoal {
+  id: string;
+  type: 'distance' | 'runs' | 'territories' | 'time';
+  target: number;
+  current: number;
+  unit: string;
+  label: string;
+}
+
+export interface RunHistory {
+  id: string;
+  date: Date;
+  distance: number;
+  duration: number;
+  pace: number;
+  calories: number;
+  territoryCreated?: boolean;
+  territoryName?: string;
+}

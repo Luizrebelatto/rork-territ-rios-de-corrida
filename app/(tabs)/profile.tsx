@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Settings, MapPin, Zap, Route, Crown, ChevronRight, LogOut, Award } from 'lucide-react-native';
+import { Settings, MapPin, Zap, Route, Crown, ChevronRight, LogOut, Award, TrendingUp, Target } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
@@ -39,15 +39,15 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
-          colors={[Colors.primary + '20', Colors.background]}
+          colors={[Colors.primary + '15', Colors.background]}
           style={[styles.headerGradient, { paddingTop: insets.top + 16 }]}
         >
           <View style={styles.headerActions}>
-            <View style={{ width: 40 }} />
+            <View style={{ width: 44 }} />
             <TouchableOpacity style={styles.settingsButton}>
               <Settings size={22} color={Colors.text} />
             </TouchableOpacity>
@@ -58,9 +58,12 @@ export default function ProfileScreen() {
               {user.avatar ? (
                 <Image source={{ uri: user.avatar }} style={styles.avatar} />
               ) : (
-                <View style={styles.avatarPlaceholder}>
+                <LinearGradient
+                  colors={[Colors.primary, Colors.primaryDark]}
+                  style={styles.avatarPlaceholder}
+                >
                   <Text style={styles.avatarText}>{user.name[0]}</Text>
-                </View>
+                </LinearGradient>
               )}
               {user.isPremium && (
                 <View style={styles.premiumBadge}>
@@ -69,56 +72,63 @@ export default function ProfileScreen() {
               )}
             </View>
             <Text style={styles.userName}>{user.name}</Text>
-            <Text style={styles.userEmail}>{user.email}</Text>
-          </View>
-
-          <View style={styles.levelCard}>
-            <View style={styles.levelHeader}>
-              <View style={styles.levelInfo}>
-                <Award size={20} color={Colors.warning} />
-                <Text style={styles.levelTitle}>{levelInfo?.title}</Text>
-              </View>
-              <View style={styles.levelBadge}>
-                <Text style={styles.levelNumber}>Lvl {levelInfo?.level}</Text>
-              </View>
-            </View>
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
-                <LinearGradient
-                  colors={[Colors.primary, Colors.secondary]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.progressFill, { width: `${(levelInfo?.progress || 0) * 100}%` }]}
-                />
-              </View>
-              <Text style={styles.progressText}>
-                {levelInfo?.xpToNextLevel} XP to Level {(levelInfo?.level || 1) + 1}
-              </Text>
+            <View style={styles.levelTag}>
+              <Award size={14} color={Colors.warning} />
+              <Text style={styles.levelTagText}>Level {levelInfo?.level} • {levelInfo?.title}</Text>
             </View>
           </View>
         </LinearGradient>
 
+        <View style={styles.levelCard}>
+          <View style={styles.levelHeader}>
+            <View style={styles.levelInfo}>
+              <Text style={styles.levelXpText}>{user.xp} XP</Text>
+            </View>
+            <Text style={styles.levelProgressLabel}>
+              {levelInfo?.xpToNextLevel} XP to Level {(levelInfo?.level || 1) + 1}
+            </Text>
+          </View>
+          <View style={styles.progressBar}>
+            <LinearGradient
+              colors={[Colors.primary, Colors.secondary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.progressFill, { width: `${(levelInfo?.progress || 0) * 100}%` }]}
+            />
+          </View>
+        </View>
+
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: Colors.primary + '20' }]}>
-              <Zap size={22} color={Colors.primary} />
+            <View style={[styles.statIcon, { backgroundColor: Colors.primaryMuted }]}>
+              <Zap size={24} color={Colors.primary} />
             </View>
-            <Text style={styles.statValue}>{user.totalPoints}</Text>
+            <Text style={styles.statValue}>{user.totalPoints.toLocaleString()}</Text>
             <Text style={styles.statLabel}>Total Points</Text>
           </View>
           <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: Colors.secondary + '20' }]}>
-              <MapPin size={22} color={Colors.secondary} />
+            <View style={[styles.statIcon, { backgroundColor: Colors.secondaryMuted }]}>
+              <MapPin size={24} color={Colors.secondary} />
             </View>
             <Text style={styles.statValue}>{user.territoriesCount}</Text>
             <Text style={styles.statLabel}>Territories</Text>
           </View>
+        </View>
+
+        <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: Colors.accent + '20' }]}>
-              <Route size={22} color={Colors.accent} />
+            <View style={[styles.statIcon, { backgroundColor: Colors.accentMuted }]}>
+              <Route size={24} color={Colors.accent} />
             </View>
             <Text style={styles.statValue}>{user.totalDistance.toFixed(1)}</Text>
             <Text style={styles.statLabel}>km Run</Text>
+          </View>
+          <View style={styles.statCard}>
+            <View style={[styles.statIcon, { backgroundColor: Colors.warningMuted }]}>
+              <TrendingUp size={24} color={Colors.warning} />
+            </View>
+            <Text style={styles.statValue}>{Math.round(user.totalDistance / 5) || 0}</Text>
+            <Text style={styles.statLabel}>Total Runs</Text>
           </View>
         </View>
 
@@ -129,14 +139,16 @@ export default function ProfileScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[Colors.warning + '20', Colors.warning + '10']}
+              colors={[Colors.warning + '20', Colors.warning + '08']}
               style={styles.premiumGradient}
             >
               <View style={styles.premiumContent}>
-                <Crown size={28} color={Colors.warning} />
+                <View style={styles.premiumIconContainer}>
+                  <Crown size={28} color={Colors.warning} />
+                </View>
                 <View style={styles.premiumText}>
-                  <Text style={styles.premiumTitle}>Go Premium</Text>
-                  <Text style={styles.premiumDescription}>Unlimited territories & more</Text>
+                  <Text style={styles.premiumTitle}>Upgrade to Pro</Text>
+                  <Text style={styles.premiumDescription}>Unlimited territories & advanced stats</Text>
                 </View>
               </View>
               <ChevronRight size={22} color={Colors.warning} />
@@ -145,10 +157,15 @@ export default function ProfileScreen() {
         )}
 
         <View style={styles.territoriesSection}>
-          <Text style={styles.sectionTitle}>My Territories</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>My Territories</Text>
+            <Text style={styles.sectionCount}>{userTerritories.length}</Text>
+          </View>
           {userTerritories.length === 0 ? (
             <View style={styles.emptyState}>
-              <MapPin size={40} color={Colors.textTertiary} />
+              <View style={styles.emptyIconContainer}>
+                <Target size={40} color={Colors.textTertiary} />
+              </View>
               <Text style={styles.emptyText}>No territories yet</Text>
               <Text style={styles.emptySubtext}>Start running to conquer your first area!</Text>
             </View>
@@ -162,6 +179,7 @@ export default function ProfileScreen() {
                     {territory.area.toFixed(2)} km² • {territory.pointsValue} pts
                   </Text>
                 </View>
+                <ChevronRight size={20} color={Colors.textTertiary} />
               </View>
             ))
           )}
@@ -200,24 +218,25 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 28,
   },
   headerActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   profileHeader: {
     alignItems: 'center',
-    marginBottom: 24,
   },
   avatarContainer: {
     position: 'relative',
@@ -234,16 +253,13 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: Colors.primary,
   },
   avatarText: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: '700' as const,
-    color: Colors.primary,
+    color: Colors.background,
   },
   premiumBadge: {
     position: 'absolute',
@@ -259,19 +275,31 @@ const styles = StyleSheet.create({
     borderColor: Colors.background,
   },
   userName: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800' as const,
     color: Colors.text,
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  userEmail: {
-    fontSize: 15,
-    color: Colors.textSecondary,
+  levelTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.warningMuted,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  levelTagText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.warning,
   },
   levelCard: {
+    marginHorizontal: 20,
     backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -279,35 +307,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  levelInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  levelTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+  levelInfo: {},
+  levelXpText: {
+    fontSize: 18,
+    fontWeight: '700' as const,
     color: Colors.text,
   },
-  levelBadge: {
-    backgroundColor: Colors.primary + '20',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  levelNumber: {
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: Colors.primary,
-  },
-  progressContainer: {
-    gap: 8,
+  levelProgressLabel: {
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
   progressBar: {
     height: 8,
-    backgroundColor: Colors.backgroundSecondary,
+    backgroundColor: Colors.backgroundTertiary,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -315,60 +329,67 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 4,
   },
-  progressText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
   statsGrid: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    marginTop: 20,
     gap: 12,
+    marginBottom: 12,
   },
   statCard: {
     flex: 1,
     backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 18,
+    padding: 18,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   statIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   statValue: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800' as const,
     color: Colors.text,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.textSecondary,
-    marginTop: 2,
+    marginTop: 4,
   },
   premiumCard: {
     marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 16,
+    marginTop: 8,
+    marginBottom: 24,
+    borderRadius: 18,
     overflow: 'hidden',
   },
   premiumGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: 18,
     borderWidth: 1,
     borderColor: Colors.warning + '30',
-    borderRadius: 16,
+    borderRadius: 18,
   },
   premiumContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
+  },
+  premiumIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: Colors.warningMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   premiumText: {},
   premiumTitle: {
@@ -379,45 +400,72 @@ const styles = StyleSheet.create({
   premiumDescription: {
     fontSize: 13,
     color: Colors.textSecondary,
+    marginTop: 2,
   },
   territoriesSection: {
     padding: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
     color: Colors.text,
-    marginBottom: 16,
+  },
+  sectionCount: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.textSecondary,
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: 40,
     backgroundColor: Colors.surface,
-    borderRadius: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.backgroundTertiary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
-    marginTop: 12,
   },
   emptySubtext: {
     fontSize: 14,
     color: Colors.textTertiary,
-    marginTop: 4,
+    marginTop: 6,
   },
   territoryItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.surface,
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   territoryColor: {
-    width: 8,
-    height: 40,
-    borderRadius: 4,
+    width: 6,
+    height: 44,
+    borderRadius: 3,
     marginRight: 14,
   },
   territoryInfo: {
@@ -431,7 +479,7 @@ const styles = StyleSheet.create({
   territoryMeta: {
     fontSize: 13,
     color: Colors.textSecondary,
-    marginTop: 2,
+    marginTop: 4,
   },
   menuSection: {
     paddingHorizontal: 20,
@@ -452,11 +500,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 12,
     borderBottomWidth: 0,
-    marginTop: 8,
+    marginTop: 12,
   },
   logoutText: {
     fontSize: 16,
     color: Colors.error,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
   },
 });
