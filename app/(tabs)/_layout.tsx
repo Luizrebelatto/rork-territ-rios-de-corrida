@@ -19,10 +19,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Run',
+          title: 'Map',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Map size={22} color={color} />
+              <Map size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
             </View>
           ),
         }}
@@ -33,7 +33,7 @@ export default function TabLayout() {
           title: 'Rankings',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Trophy size={22} color={color} />
+              <Trophy size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
             </View>
           ),
         }}
@@ -44,7 +44,7 @@ export default function TabLayout() {
           title: 'Groups',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Users size={22} color={color} />
+              <Users size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
             </View>
           ),
         }}
@@ -55,7 +55,7 @@ export default function TabLayout() {
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <User size={22} color={color} />
+              <User size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
             </View>
           ),
         }}
@@ -70,16 +70,16 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.border,
     borderTopWidth: 1,
     paddingTop: 8,
-    height: Platform.OS === 'ios' ? 88 : 70,
+    height: Platform.OS === 'ios' ? 88 : 68,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: -8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 8,
+        elevation: 12,
       },
     }),
   },
@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600' as const,
     marginTop: 4,
+    letterSpacing: 0.3,
   },
   tabBarItem: {
     paddingTop: 4,
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
     height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 12,
   },
   iconContainerActive: {
     backgroundColor: Colors.primaryMuted,

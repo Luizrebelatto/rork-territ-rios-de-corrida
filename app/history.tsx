@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, MapPin, Clock, Zap, Flame, TrendingUp, Calendar } from 'lucide-react-native';
+import { ChevronLeft, Clock, Flame, TrendingUp, Calendar, Shield } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
@@ -20,10 +20,11 @@ const MOCK_HISTORY: RunHistory[] = [
 export default function HistoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useApp();
+  useApp();
 
   const totalDistance = MOCK_HISTORY.reduce((acc, run) => acc + run.distance, 0);
   const totalRuns = MOCK_HISTORY.length;
+  const territoriesConquered = MOCK_HISTORY.filter(r => r.territoryCreated).length;
   const avgPace = MOCK_HISTORY.reduce((acc, run) => acc + run.pace, 0) / totalRuns;
   const avgPaceMinutes = Math.floor(avgPace);
   const avgPaceSeconds = Math.round((avgPace - avgPaceMinutes) * 60);
@@ -53,28 +54,30 @@ export default function HistoryScreen() {
       >
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ChevronLeft size={28} color={Colors.text} />
+            <ChevronLeft size={26} color={Colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Run History</Text>
-          <View style={{ width: 44 }} />
+          <Text style={styles.headerTitle}>History</Text>
+          <View style={{ width: 46 }} />
         </View>
 
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryItem}>
+        <View style={styles.summaryGrid}>
+          <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{totalDistance.toFixed(1)}</Text>
-            <Text style={styles.summaryLabel}>Total km</Text>
+            <Text style={styles.summaryLabel}>km total</Text>
           </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
+          <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{totalRuns}</Text>
-            <Text style={styles.summaryLabel}>Runs</Text>
+            <Text style={styles.summaryLabel}>runs</Text>
           </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryValue}>{territoriesConquered}</Text>
+            <Text style={styles.summaryLabel}>territories</Text>
+          </View>
+          <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>
               {avgPaceMinutes}:{avgPaceSeconds.toString().padStart(2, '0')}
             </Text>
-            <Text style={styles.summaryLabel}>Avg Pace</Text>
+            <Text style={styles.summaryLabel}>avg pace</Text>
           </View>
         </View>
       </LinearGradient>
@@ -85,11 +88,11 @@ export default function HistoryScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionHeader}>
-          <Calendar size={20} color={Colors.textSecondary} />
-          <Text style={styles.sectionTitle}>Recent Runs</Text>
+          <Calendar size={18} color={Colors.textSecondary} />
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
         </View>
 
-        {MOCK_HISTORY.map((run, index) => (
+        {MOCK_HISTORY.map((run) => (
           <RunCard key={run.id} run={run} formatDuration={formatDuration} formatDate={formatDate} />
         ))}
       </ScrollView>
@@ -112,16 +115,16 @@ function RunCard({
   return (
     <TouchableOpacity style={styles.runCard} activeOpacity={0.7}>
       <View style={styles.runHeader}>
-        <View style={styles.runDateContainer}>
+        <View style={styles.runDateRow}>
           <Text style={styles.runDate}>{formatDate(run.date)}</Text>
           {run.territoryCreated && (
             <View style={styles.territoryBadge}>
-              <MapPin size={12} color={Colors.primary} />
+              <Shield size={11} color={Colors.primary} />
               <Text style={styles.territoryBadgeText}>{run.territoryName}</Text>
             </View>
           )}
         </View>
-        <View style={styles.runDistance}>
+        <View style={styles.runDistanceContainer}>
           <Text style={styles.runDistanceValue}>{run.distance.toFixed(1)}</Text>
           <Text style={styles.runDistanceUnit}>km</Text>
         </View>
@@ -129,17 +132,19 @@ function RunCard({
 
       <View style={styles.runStats}>
         <View style={styles.runStat}>
-          <Clock size={16} color={Colors.textTertiary} />
+          <Clock size={14} color={Colors.textTertiary} />
           <Text style={styles.runStatValue}>{formatDuration(run.duration)}</Text>
         </View>
+        <View style={styles.runStatDot} />
         <View style={styles.runStat}>
-          <TrendingUp size={16} color={Colors.textTertiary} />
+          <TrendingUp size={14} color={Colors.textTertiary} />
           <Text style={styles.runStatValue}>
             {paceMinutes}:{paceSeconds.toString().padStart(2, '0')} /km
           </Text>
         </View>
+        <View style={styles.runStatDot} />
         <View style={styles.runStat}>
-          <Flame size={16} color={Colors.textTertiary} />
+          <Flame size={14} color={Colors.textTertiary} />
           <Text style={styles.runStatValue}>{run.calories} cal</Text>
         </View>
       </View>
@@ -153,19 +158,19 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   headerGradient: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
@@ -173,62 +178,59 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700' as const,
     color: Colors.text,
   },
-  summaryCard: {
+  summaryGrid: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 20,
+    gap: 10,
     marginTop: 16,
+  },
+  summaryCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  summaryItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
   summaryValue: {
-    fontSize: 26,
+    fontSize: 20,
     fontWeight: '800' as const,
     color: Colors.text,
   },
   summaryLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
     marginTop: 4,
-  },
-  summaryDivider: {
-    width: 1,
-    backgroundColor: Colors.border,
-    marginHorizontal: 10,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700' as const,
     color: Colors.textSecondary,
+    letterSpacing: 0.5,
   },
   runCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -236,58 +238,66 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 14,
   },
-  runDateContainer: {
+  runDateRow: {
     gap: 8,
   },
   runDate: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.text,
   },
   territoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     backgroundColor: Colors.primaryMuted,
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 5,
+    borderRadius: 10,
     alignSelf: 'flex-start',
+    marginTop: 6,
   },
   territoryBadgeText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
+    fontSize: 11,
+    fontWeight: '700' as const,
     color: Colors.primary,
   },
-  runDistance: {
+  runDistanceContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   runDistanceValue: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800' as const,
     color: Colors.text,
   },
   runDistanceUnit: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
     marginLeft: 4,
   },
   runStats: {
     flexDirection: 'row',
-    gap: 20,
+    alignItems: 'center',
   },
   runStat: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   runStatValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
+  },
+  runStatDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: Colors.textTertiary,
+    marginHorizontal: 10,
   },
 });

@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Polyline, Circle, PROVIDER_DEFAULT } from 'react-native-maps';
-import { Pause, Square, Play, MapPin, X } from 'lucide-react-native';
+import { Pause, Square, Play, X, Zap, Grid3x3, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -11,7 +11,7 @@ import { useApp } from '@/contexts/AppContext';
 import { DEFAULT_LOCATION } from '@/mocks/data';
 import { Coordinate } from '@/types';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 
 export default function RunScreen() {
   const router = useRouter();
@@ -21,8 +21,10 @@ export default function RunScreen() {
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [path, setPath] = useState<Coordinate[]>([userLocation]);
+  const [cellsConquered, setCellsConquered] = useState(0);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const recordingAnim = useRef(new Animated.Value(1)).current;
+  const cellFlashAnim = useRef(new Animated.Value(0)).current;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const simulationRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -32,11 +34,28 @@ export default function RunScreen() {
     }, 1000);
   }, []);
 
+  const flashCellConquest = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Animated.sequence([
+      Animated.timing(cellFlashAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(cellFlashAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [cellFlashAnim]);
+
   const startLocationSimulation = useCallback(() => {
     let angle = 0;
     const centerLat = userLocation.latitude;
     const centerLng = userLocation.longitude;
     const radius = 0.002;
+    let lastCellUpdate = 0;
 
     simulationRef.current = setInterval(() => {
       if (!isPaused) {
@@ -48,27 +67,34 @@ export default function RunScreen() {
         setPath((prev) => [...prev, newPoint]);
         updateRunPath(newPoint);
 
+        const currentTime = Date.now();
+        if (currentTime - lastCellUpdate > 3000) {
+          setCellsConquered(prev => prev + 1);
+          flashCellConquest();
+          lastCellUpdate = currentTime;
+        }
+
         mapRef.current?.animateToRegion({
           latitude: newLat,
           longitude: newLng,
-          latitudeDelta: 0.006,
-          longitudeDelta: 0.006,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
         }, 500);
       }
     }, 1000);
-  }, [userLocation, isPaused, updateRunPath]);
+  }, [userLocation, isPaused, updateRunPath, flashCellConquest]);
 
   const startAnimations = useCallback(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.3,
-          duration: 1200,
+          toValue: 1.25,
+          duration: 1000,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 1200,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ])
@@ -77,13 +103,13 @@ export default function RunScreen() {
     Animated.loop(
       Animated.sequence([
         Animated.timing(recordingAnim, {
-          toValue: 0.3,
-          duration: 800,
+          toValue: 0.2,
+          duration: 600,
           useNativeDriver: true,
         }),
         Animated.timing(recordingAnim, {
           toValue: 1,
-          duration: 800,
+          duration: 600,
           useNativeDriver: true,
         }),
       ])
@@ -131,9 +157,10 @@ export default function RunScreen() {
         territoryCreated: result?.territory ? 'true' : 'false',
         territoryName: result?.territory?.name || '',
         territoryPoints: result?.territory?.pointsValue?.toString() || '0',
+        cellsConquered: cellsConquered.toString(),
       },
     });
-  }, [endRun, currentRun, elapsedTime, router]);
+  }, [endRun, currentRun, elapsedTime, router, cellsConquered]);
 
   const handleCancel = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -159,7 +186,6 @@ export default function RunScreen() {
     : 0;
   const paceMinutes = Math.floor(pace);
   const paceSeconds = Math.round((pace - paceMinutes) * 60);
-  const calories = Math.round(distance * 45);
 
   const isPathClosed = path.length >= 4 && 
     Math.abs(path[0].latitude - path[path.length - 1].latitude) < 0.0005 &&
@@ -174,8 +200,8 @@ export default function RunScreen() {
         initialRegion={{
           latitude: DEFAULT_LOCATION.latitude,
           longitude: DEFAULT_LOCATION.longitude,
-          latitudeDelta: 0.008,
-          longitudeDelta: 0.008,
+          latitudeDelta: 0.006,
+          longitudeDelta: 0.006,
         }}
         customMapStyle={mapStyle}
         showsUserLocation
@@ -186,7 +212,7 @@ export default function RunScreen() {
           <Polyline
             coordinates={path}
             strokeColor={isPathClosed ? Colors.primary : Colors.secondary}
-            strokeWidth={5}
+            strokeWidth={6}
             lineDashPattern={isPaused ? [10, 5] : undefined}
           />
         )}
@@ -194,52 +220,67 @@ export default function RunScreen() {
         {path.length > 0 && (
           <Circle
             center={path[0]}
-            radius={25}
-            fillColor={Colors.primary + '40'}
+            radius={30}
+            fillColor={Colors.primary + '30'}
             strokeColor={Colors.primary}
             strokeWidth={3}
           />
         )}
       </MapView>
 
+      <Animated.View 
+        style={[
+          styles.cellFlashOverlay,
+          {
+            opacity: cellFlashAnim,
+          }
+        ]}
+        pointerEvents="none"
+      />
+
       <LinearGradient
-        colors={['rgba(13,13,13,0.95)', 'rgba(13,13,13,0)']}
+        colors={['rgba(10,10,15,0.98)', 'rgba(10,10,15,0.5)', 'transparent']}
         style={[styles.topGradient, { paddingTop: insets.top }]}
       >
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-            <X size={24} color={Colors.text} />
+            <X size={22} color={Colors.text} />
           </TouchableOpacity>
 
           <View style={styles.recordingBadge}>
             <Animated.View style={[styles.recordingDot, { opacity: recordingAnim }]} />
-            <Text style={styles.recordingText}>{isPaused ? 'PAUSED' : 'RECORDING'}</Text>
+            <Text style={styles.recordingText}>{isPaused ? 'PAUSED' : 'LIVE'}</Text>
           </View>
 
-          {isPathClosed && (
+          {isPathClosed ? (
             <View style={styles.closedBadge}>
-              <MapPin size={14} color={Colors.background} />
-              <Text style={styles.closedText}>CLOSED!</Text>
+              <Lock size={12} color={Colors.background} />
+              <Text style={styles.closedText}>LOCKED</Text>
+            </View>
+          ) : (
+            <View style={styles.cellsBadge}>
+              <Grid3x3 size={14} color={Colors.secondary} />
+              <Text style={styles.cellsText}>+{cellsConquered}</Text>
             </View>
           )}
         </View>
       </LinearGradient>
 
       <LinearGradient
-        colors={['rgba(13,13,13,0)', 'rgba(13,13,13,0.98)', Colors.background]}
-        locations={[0, 0.3, 0.5]}
-        style={[styles.bottomGradient, { paddingBottom: insets.bottom + 20 }]}
+        colors={['transparent', 'rgba(10,10,15,0.95)', Colors.background]}
+        locations={[0, 0.25, 0.45]}
+        style={[styles.bottomGradient, { paddingBottom: insets.bottom + 24 }]}
       >
         <View style={styles.metricsContainer}>
           <View style={styles.primaryMetric}>
             <Text style={styles.primaryValue}>{formatTime(elapsedTime)}</Text>
-            <Text style={styles.primaryLabel}>DURATION</Text>
+            <Text style={styles.primaryLabel}>TIME</Text>
           </View>
 
           <View style={styles.secondaryMetrics}>
             <View style={styles.metric}>
               <Text style={styles.metricValue}>{distance.toFixed(2)}</Text>
-              <Text style={styles.metricLabel}>KM</Text>
+              <Text style={styles.metricUnit}>KM</Text>
             </View>
             
             <View style={styles.metricDivider} />
@@ -248,14 +289,17 @@ export default function RunScreen() {
               <Text style={styles.metricValue}>
                 {paceMinutes}:{paceSeconds.toString().padStart(2, '0')}
               </Text>
-              <Text style={styles.metricLabel}>PACE</Text>
+              <Text style={styles.metricUnit}>PACE</Text>
             </View>
             
             <View style={styles.metricDivider} />
             
             <View style={styles.metric}>
-              <Text style={styles.metricValue}>{calories}</Text>
-              <Text style={styles.metricLabel}>CAL</Text>
+              <View style={styles.cellsMetric}>
+                <Grid3x3 size={16} color={Colors.primary} />
+                <Text style={[styles.metricValue, { color: Colors.primary }]}>{cellsConquered}</Text>
+              </View>
+              <Text style={styles.metricUnit}>CELLS</Text>
             </View>
           </View>
         </View>
@@ -267,9 +311,9 @@ export default function RunScreen() {
             activeOpacity={0.8}
           >
             {isPaused ? (
-              <Play size={28} color={Colors.text} fill={Colors.text} />
+              <Play size={26} color={Colors.text} fill={Colors.text} />
             ) : (
-              <Pause size={28} color={Colors.text} />
+              <Pause size={26} color={Colors.text} />
             )}
           </TouchableOpacity>
 
@@ -281,10 +325,10 @@ export default function RunScreen() {
               activeOpacity={0.9}
             >
               <LinearGradient
-                colors={[Colors.accent, Colors.accent + 'CC']}
+                colors={[Colors.accent, Colors.accentLight] as const}
                 style={styles.stopButtonGradient}
               >
-                <Square size={32} color={Colors.text} fill={Colors.text} />
+                <Square size={30} color={Colors.text} fill={Colors.text} />
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -292,23 +336,30 @@ export default function RunScreen() {
           <View style={styles.placeholderButton} />
         </View>
 
-        <Text style={styles.hintText}>
-          {isPathClosed 
-            ? '🎯 Stop now to claim your territory!' 
-            : 'Return to start to close the loop'}
-        </Text>
+        <View style={styles.hintContainer}>
+          {isPathClosed ? (
+            <View style={styles.hintBadge}>
+              <Zap size={14} color={Colors.primary} />
+              <Text style={styles.hintTextSuccess}>Territory ready! Stop to claim</Text>
+            </View>
+          ) : (
+            <Text style={styles.hintText}>Return to start to close territory</Text>
+          )}
+        </View>
       </LinearGradient>
     </View>
   );
 }
 
 const mapStyle = [
-  { elementType: 'geometry', stylers: [{ color: '#0D0D0D' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0D0D0D' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#444444' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1A1A1A' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#080808' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0F0F0F' }] },
+  { elementType: 'geometry', stylers: [{ color: '#0A0A0F' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0A0A0F' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#3A3A4A' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#151520' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#080810' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0D0D14' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
 ];
 
 const styles = StyleSheet.create({
@@ -319,24 +370,28 @@ const styles = StyleSheet.create({
   map: {
     ...StyleSheet.absoluteFillObject,
   },
+  cellFlashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.primary + '15',
+  },
   topGradient: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 140,
-    paddingHorizontal: 20,
+    height: 160,
+    paddingHorizontal: 16,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 12,
+    paddingTop: 8,
   },
   cancelButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
@@ -361,10 +416,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
   },
   recordingText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800' as const,
     color: Colors.text,
-    letterSpacing: 1.5,
+    letterSpacing: 2,
   },
   closedBadge: {
     flexDirection: 'row',
@@ -376,41 +431,57 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   closedText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800' as const,
     color: Colors.background,
     letterSpacing: 1,
+  },
+  cellsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.secondaryMuted,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: Colors.secondary + '40',
+  },
+  cellsText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.secondary,
   },
   bottomGradient: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 80,
+    paddingTop: 100,
     alignItems: 'center',
   },
   metricsContainer: {
     width: '100%',
     paddingHorizontal: 20,
-    marginBottom: 32,
+    marginBottom: 28,
   },
   primaryMetric: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
   },
   primaryValue: {
-    fontSize: 72,
-    fontWeight: '200' as const,
+    fontSize: 80,
+    fontWeight: '100' as const,
     color: Colors.text,
-    letterSpacing: -2,
+    letterSpacing: -3,
     fontVariant: ['tabular-nums'],
   },
   primaryLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700' as const,
-    color: Colors.textSecondary,
-    letterSpacing: 3,
-    marginTop: -4,
+    color: Colors.textTertiary,
+    letterSpacing: 4,
+    marginTop: -8,
   },
   secondaryMetrics: {
     flexDirection: 'row',
@@ -418,8 +489,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.surface,
     borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -428,35 +499,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metricValue: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '700' as const,
     color: Colors.text,
     fontVariant: ['tabular-nums'],
   },
-  metricLabel: {
-    fontSize: 12,
-    fontWeight: '600' as const,
+  metricUnit: {
+    fontSize: 11,
+    fontWeight: '700' as const,
     color: Colors.textTertiary,
-    letterSpacing: 1.5,
+    letterSpacing: 2,
     marginTop: 4,
   },
   metricDivider: {
     width: 1,
-    height: 40,
+    height: 36,
     backgroundColor: Colors.border,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
+  },
+  cellsMetric: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   controlsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 24,
+    gap: 28,
     marginBottom: 20,
   },
   pauseButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
@@ -470,21 +546,21 @@ const styles = StyleSheet.create({
   },
   stopButtonPulse: {
     position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.accent + '25',
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: Colors.accent + '20',
   },
   stopButton: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     ...Platform.select({
       ios: {
         shadowColor: Colors.accent,
-        shadowOffset: { width: 0, height: 6 },
+        shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.5,
-        shadowRadius: 16,
+        shadowRadius: 20,
       },
       android: {
         elevation: 16,
@@ -492,20 +568,38 @@ const styles = StyleSheet.create({
     }),
   },
   stopButtonGradient: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     justifyContent: 'center',
     alignItems: 'center',
   },
   placeholderButton: {
-    width: 64,
-    height: 64,
+    width: 60,
+    height: 60,
+  },
+  hintContainer: {
+    alignItems: 'center',
+  },
+  hintBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: Colors.primaryMuted,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.primary + '40',
   },
   hintText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
-    textAlign: 'center',
+  },
+  hintTextSuccess: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.primary,
   },
 });
