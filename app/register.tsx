@@ -14,24 +14,61 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MapPin, Mail, Lock, Eye, EyeOff, ChevronRight } from 'lucide-react-native';
+import { 
+  MapPin, 
+  Mail, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  User, 
+  ChevronRight,
+  ArrowLeft,
+  Check,
+} from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login } = useApp();
   
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleEmailLogin = async () => {
-    if (!email.trim() || !password.trim()) {
+  const passwordRequirements = [
+    { label: 'Mínimo 8 caracteres', valid: password.length >= 8 },
+    { label: 'Uma letra maiúscula', valid: /[A-Z]/.test(password) },
+    { label: 'Um número', valid: /[0-9]/.test(password) },
+  ];
+
+  const isPasswordValid = passwordRequirements.every(req => req.valid);
+
+  const handleRegister = async () => {
+    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError('Preencha todos os campos');
+      return;
+    }
+
+    if (!isPasswordValid) {
+      setError('A senha não atende aos requisitos');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Email inválido');
       return;
     }
 
@@ -40,18 +77,18 @@ export default function LoginScreen() {
 
     try {
       await login({
-        name: email.split('@')[0],
+        name: name.trim(),
         email: email.trim(),
       });
       router.replace('/onboarding');
     } catch (err) {
-      setError('Erro ao fazer login. Tente novamente.');
+      setError('Erro ao criar conta. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
     setIsLoading(true);
     try {
       await login({
@@ -65,7 +102,7 @@ export default function LoginScreen() {
     }
   };
 
-  const handleAppleLogin = async () => {
+  const handleAppleSignup = async () => {
     setIsLoading(true);
     try {
       await login({
@@ -92,28 +129,33 @@ export default function LoginScreen() {
         <ScrollView 
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24 }
+            { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.logoContainer}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <ArrowLeft size={24} color={Colors.text} />
+          </TouchableOpacity>
+
+          <View style={styles.headerContainer}>
             <LinearGradient
               colors={[Colors.primary, Colors.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.logoGradient}
             >
-              <MapPin size={40} color={Colors.background} strokeWidth={2.5} />
+              <MapPin size={32} color={Colors.background} strokeWidth={2.5} />
             </LinearGradient>
-            <Text style={styles.logoText}>TerritoryRun</Text>
-            <Text style={styles.tagline}>Conquiste sua cidade correndo</Text>
+            <Text style={styles.headerTitle}>Criar Conta</Text>
+            <Text style={styles.headerSubtitle}>Comece sua jornada de conquista</Text>
           </View>
 
           <View style={styles.formContainer}>
-            <Text style={styles.welcomeText}>Bem-vindo de volta!</Text>
-            <Text style={styles.subtitleText}>Entre para continuar sua conquista</Text>
-
             {error ? (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{error}</Text>
@@ -121,6 +163,18 @@ export default function LoginScreen() {
             ) : null}
 
             <View style={styles.inputContainer}>
+              <View style={styles.inputWrapper}>
+                <User size={20} color={Colors.textSecondary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nome completo"
+                  placeholderTextColor={Colors.textTertiary}
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                />
+              </View>
+
               <View style={styles.inputWrapper}>
                 <Mail size={20} color={Colors.textSecondary} />
                 <TextInput
@@ -156,15 +210,54 @@ export default function LoginScreen() {
                   )}
                 </TouchableOpacity>
               </View>
+
+              {password.length > 0 && (
+                <View style={styles.requirementsContainer}>
+                  {passwordRequirements.map((req, index) => (
+                    <View key={index} style={styles.requirementRow}>
+                      <View style={[
+                        styles.requirementCheck,
+                        req.valid && styles.requirementCheckValid
+                      ]}>
+                        {req.valid && <Check size={12} color={Colors.background} />}
+                      </View>
+                      <Text style={[
+                        styles.requirementText,
+                        req.valid && styles.requirementTextValid
+                      ]}>
+                        {req.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <View style={styles.inputWrapper}>
+                <Lock size={20} color={Colors.textSecondary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirmar senha"
+                  placeholderTextColor={Colors.textTertiary}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                />
+                <TouchableOpacity 
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} color={Colors.textSecondary} />
+                  ) : (
+                    <Eye size={20} color={Colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity 
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-              onPress={handleEmailLogin}
+              style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
+              onPress={handleRegister}
               activeOpacity={0.8}
               disabled={isLoading}
             >
@@ -172,13 +265,13 @@ export default function LoginScreen() {
                 colors={[Colors.primary, Colors.primaryDark]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.loginButtonGradient}
+                style={styles.registerButtonGradient}
               >
                 {isLoading ? (
                   <ActivityIndicator color={Colors.background} />
                 ) : (
                   <>
-                    <Text style={styles.loginButtonText}>Entrar</Text>
+                    <Text style={styles.registerButtonText}>Criar conta</Text>
                     <ChevronRight size={20} color={Colors.background} />
                   </>
                 )}
@@ -187,14 +280,14 @@ export default function LoginScreen() {
 
             <View style={styles.dividerContainer}>
               <View style={styles.divider} />
-              <Text style={styles.dividerText}>ou continue com</Text>
+              <Text style={styles.dividerText}>ou cadastre com</Text>
               <View style={styles.divider} />
             </View>
 
             <View style={styles.socialButtons}>
               <TouchableOpacity 
                 style={styles.socialButton}
-                onPress={handleGoogleLogin}
+                onPress={handleGoogleSignup}
                 activeOpacity={0.8}
                 disabled={isLoading}
               >
@@ -208,7 +301,7 @@ export default function LoginScreen() {
               {Platform.OS === 'ios' && (
                 <TouchableOpacity 
                   style={styles.socialButton}
-                  onPress={handleAppleLogin}
+                  onPress={handleAppleSignup}
                   activeOpacity={0.8}
                   disabled={isLoading}
                 >
@@ -219,15 +312,15 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Não tem uma conta?</Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text style={styles.signupLink}>Criar conta</Text>
+          <View style={styles.loginContainer}>
+            <Text style={styles.loginText}>Já tem uma conta?</Text>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.loginLink}>Entrar</Text>
             </TouchableOpacity>
           </View>
 
           <Text style={styles.disclaimer}>
-            Ao continuar, você concorda com nossos Termos de Serviço e Política de Privacidade
+            Ao criar uma conta, você concorda com nossos Termos de Serviço e Política de Privacidade
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -247,42 +340,39 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 24,
   },
-  logoContainer: {
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 20,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 28,
   },
   logoGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
-  logoText: {
-    fontSize: 28,
-    fontWeight: '800' as const,
-    color: Colors.text,
-    letterSpacing: -0.5,
-  },
-  tagline: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: 4,
-  },
-  formContainer: {
-    flex: 1,
-  },
-  welcomeText: {
-    fontSize: 24,
+  headerTitle: {
+    fontSize: 26,
     fontWeight: '700' as const,
     color: Colors.text,
     marginBottom: 4,
   },
-  subtitleText: {
+  headerSubtitle: {
     fontSize: 15,
     color: Colors.textSecondary,
-    marginBottom: 24,
+  },
+  formContainer: {
+    flex: 1,
   },
   errorContainer: {
     backgroundColor: Colors.accentMuted,
@@ -300,7 +390,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     gap: 16,
-    marginBottom: 12,
+    marginBottom: 24,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -318,31 +408,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
+  requirementsContainer: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    gap: 8,
   },
-  forgotPasswordText: {
-    fontSize: 14,
+  requirementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  requirementCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  requirementCheckValid: {
+    backgroundColor: Colors.primary,
+  },
+  requirementText: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+  },
+  requirementTextValid: {
     color: Colors.primary,
-    fontWeight: '500' as const,
   },
-  loginButton: {
+  registerButton: {
     borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 24,
   },
-  loginButtonDisabled: {
+  registerButtonDisabled: {
     opacity: 0.7,
   },
-  loginButtonGradient: {
+  registerButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
     gap: 8,
   },
-  loginButtonText: {
+  registerButtonText: {
     fontSize: 17,
     fontWeight: '600' as const,
     color: Colors.background,
@@ -391,18 +501,18 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: Colors.text,
   },
-  signupContainer: {
+  loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: 28,
     gap: 6,
   },
-  signupText: {
+  loginText: {
     fontSize: 15,
     color: Colors.textSecondary,
   },
-  signupLink: {
+  loginLink: {
     fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.primary,
@@ -411,7 +521,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textTertiary,
     textAlign: 'center',
-    marginTop: 24,
+    marginTop: 20,
     lineHeight: 18,
   },
 });

@@ -21,6 +21,7 @@ function RootLayoutNav() {
     >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="register" options={{ gestureEnabled: true }} />
       <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       <Stack.Screen name="run" options={{ gestureEnabled: false }} />
       <Stack.Screen 
