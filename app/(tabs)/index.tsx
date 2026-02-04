@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MapView, { Polygon, Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import MapView, { Polygon, Marker } from 'react-native-maps';
 import { Play, Zap, Target, Navigation, Grid3x3, Crosshair, Shield, Swords } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -29,7 +29,7 @@ export default function HomeScreen() {
     } else if (!isLoading && isAuthenticated && !hasOnboarded) {
       router.replace('/onboarding');
     }
-  }, [isAuthenticated, hasOnboarded, isLoading, router]);
+  }, [isAuthenticated, hasOnboarded, isLoading]);
 
   useEffect(() => {
     Animated.loop(
@@ -90,8 +90,8 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     mapRef.current?.animateToRegion({
       ...userLocation,
-      latitudeDelta: 0.008,
-      longitudeDelta: 0.008,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
     }, 500);
   }, [userLocation]);
 
@@ -109,16 +109,16 @@ export default function HomeScreen() {
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={PROVIDER_DEFAULT}
         initialRegion={{
           latitude: DEFAULT_LOCATION.latitude,
           longitude: DEFAULT_LOCATION.longitude,
           latitudeDelta: 0.015,
           longitudeDelta: 0.015,
         }}
-        customMapStyle={mapStyle}
-        showsUserLocation
+        mapType="standard"
+        showsUserLocation={true}
         showsMyLocationButton={false}
+        userInterfaceStyle="dark"
       >
         {territories.map((territory) => (
           <React.Fragment key={territory.id}>
@@ -127,16 +127,14 @@ export default function HomeScreen() {
               fillColor={territory.ownerId === user?.id ? Colors.cells.owned : Colors.cells.enemy}
               strokeColor={territory.color}
               strokeWidth={2}
-              tappable
+            />
+            <Marker
+              identifier={territory.id}
+              coordinate={getPolygonCenter(territory.coordinates)}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setSelectedTerritory(territory);
               }}
-            />
-            <Marker
-              coordinate={getPolygonCenter(territory.coordinates)}
-              anchor={{ x: 0.5, y: 0.5 }}
-              onPress={() => setSelectedTerritory(territory)}
             >
               <View style={[styles.territoryMarker, { backgroundColor: territory.color }]}>
                 {territory.ownerId === user?.id ? (
@@ -308,18 +306,6 @@ function getPolygonCenter(coords: { latitude: number; longitude: number }[]) {
   const lng = coords.reduce((sum, c) => sum + c.longitude, 0) / coords.length;
   return { latitude: lat, longitude: lng };
 }
-
-const mapStyle = [
-  { elementType: 'geometry', stylers: [{ color: '#0A0A0F' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0A0A0F' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#3A3A4A' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#151520' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1E1E2D' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#080810' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0D0D14' }] },
-  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-];
 
 const styles = StyleSheet.create({
   container: {

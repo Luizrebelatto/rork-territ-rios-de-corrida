@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MapView, { Polyline, Circle, PROVIDER_DEFAULT } from 'react-native-maps';
+import MapView, { Polyline, Circle } from 'react-native-maps';
 import { Pause, Square, Play, X, Zap, Grid3x3, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -77,8 +77,8 @@ export default function RunScreen() {
         mapRef.current?.animateToRegion({
           latitude: newLat,
           longitude: newLng,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
+          latitudeDelta: 0.008,
+          longitudeDelta: 0.008,
         }, 500);
       }
     }, 1000);
@@ -196,27 +196,25 @@ export default function RunScreen() {
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={PROVIDER_DEFAULT}
         initialRegion={{
           latitude: DEFAULT_LOCATION.latitude,
           longitude: DEFAULT_LOCATION.longitude,
-          latitudeDelta: 0.006,
-          longitudeDelta: 0.006,
+          latitudeDelta: 0.008,
+          longitudeDelta: 0.008,
         }}
-        customMapStyle={mapStyle}
-        showsUserLocation
+        mapType="standard"
+        showsUserLocation={true}
         showsMyLocationButton={false}
-        followsUserLocation
+        userInterfaceStyle="dark"
       >
         {path.length > 1 && (
           <Polyline
             coordinates={path}
             strokeColor={isPathClosed ? Colors.primary : Colors.secondary}
             strokeWidth={6}
-            lineDashPattern={isPaused ? [10, 5] : undefined}
           />
         )}
-        
+
         {path.length > 0 && (
           <Circle
             center={path[0]}
@@ -350,17 +348,6 @@ export default function RunScreen() {
     </View>
   );
 }
-
-const mapStyle = [
-  { elementType: 'geometry', stylers: [{ color: '#0A0A0F' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0A0A0F' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#3A3A4A' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#151520' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#080810' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0D0D14' }] },
-  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-];
 
 const styles = StyleSheet.create({
   container: {
