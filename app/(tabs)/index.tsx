@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MapView, { Polygon, Marker } from 'react-native-maps';
+import { AppleMaps, GoogleMaps } from 'expo-maps';
 import { Play, Zap, Target, Navigation, Grid3x3, Crosshair, Shield, Swords } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -17,7 +17,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, isAuthenticated, hasOnboarded, territories, userLocation, canCreateTerritory, isLoading } = useApp();
-  const mapRef = useRef<MapView>(null);
+  const appleMapRef = useRef<AppleMaps.MapView>(null);
+  const googleMapRef = useRef<GoogleMaps.MapView>(null);
   const [selectedTerritory, setSelectedTerritory] = useState<Territory | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -88,11 +89,15 @@ export default function HomeScreen() {
 
   const centerOnUser = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    mapRef.current?.animateToRegion({
-      ...userLocation,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    }, 500);
+    const cameraConfig = {
+      coordinates: userLocation,
+      zoom: 15,
+    };
+    if (Platform.OS === 'ios') {
+      appleMapRef.current?.setCameraPosition(cameraConfig);
+    } else {
+      googleMapRef.current?.setCameraPosition({ ...cameraConfig, duration: 500 });
+    }
   }, [userLocation]);
 
   if (isLoading || !isAuthenticated) {
@@ -104,49 +109,76 @@ export default function HomeScreen() {
     .filter(t => t.ownerId === user?.id)
     .reduce((sum, t) => sum + t.area, 0);
 
+  const mapPolygons = territories.map((territory) => ({
+    id: territory.id,
+    coordinates: territory.coordinates,
+    color: territory.ownerId === user?.id ? Colors.cells.owned : Colors.cells.enemy,
+    lineColor: territory.color,
+    lineWidth: 2,
+  }));
+
+  const handleMarkerClick = (event: { id?: string }) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const territory = territories.find(t => t.id === event.id);
+    if (territory) {
+      setSelectedTerritory(territory);
+    }
+  };
+
+  const mapCameraPosition = {
+    coordinates: {
+      latitude: DEFAULT_LOCATION.latitude,
+      longitude: DEFAULT_LOCATION.longitude,
+    },
+    zoom: 15,
+  };
+
   return (
     <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        initialRegion={{
-          latitude: DEFAULT_LOCATION.latitude,
-          longitude: DEFAULT_LOCATION.longitude,
-          latitudeDelta: 0.015,
-          longitudeDelta: 0.015,
-        }}
-        mapType="standard"
-        showsUserLocation={true}
-        showsMyLocationButton={false}
-        userInterfaceStyle="dark"
-      >
-        {territories.map((territory) => (
-          <React.Fragment key={territory.id}>
-            <Polygon
-              coordinates={territory.coordinates}
-              fillColor={territory.ownerId === user?.id ? Colors.cells.owned : Colors.cells.enemy}
-              strokeColor={territory.color}
-              strokeWidth={2}
-            />
-            <Marker
-              identifier={territory.id}
-              coordinate={getPolygonCenter(territory.coordinates)}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedTerritory(territory);
-              }}
-            >
-              <View style={[styles.territoryMarker, { backgroundColor: territory.color }]}>
-                {territory.ownerId === user?.id ? (
-                  <Shield size={10} color={Colors.background} />
-                ) : (
-                  <Swords size={10} color={Colors.background} />
-                )}
-              </View>
-            </Marker>
-          </React.Fragment>
-        ))}
-      </MapView>
+      {Platform.OS === 'ios' ? (
+        <AppleMaps.View
+          ref={appleMapRef}
+          style={styles.map}
+          cameraPosition={mapCameraPosition}
+          polygons={mapPolygons}
+          markers={territories.map((territory) => ({
+            id: territory.id,
+            coordinates: getPolygonCenter(territory.coordinates),
+            title: territory.name,
+            systemImage: territory.ownerId === user?.id ? 'shield.fill' : 'flag.fill',
+            tintColor: territory.color,
+          }))}
+          properties={{
+            isMyLocationEnabled: true,
+            mapType: AppleMaps.MapType.STANDARD,
+          }}
+          uiSettings={{
+            myLocationButtonEnabled: false,
+          }}
+          onMarkerClick={handleMarkerClick}
+        />
+      ) : (
+        <GoogleMaps.View
+          ref={googleMapRef}
+          style={styles.map}
+          cameraPosition={mapCameraPosition}
+          polygons={mapPolygons}
+          markers={territories.map((territory) => ({
+            id: territory.id,
+            coordinates: getPolygonCenter(territory.coordinates),
+            title: territory.name,
+          }))}
+          properties={{
+            isMyLocationEnabled: true,
+            mapType: GoogleMaps.MapType.NORMAL,
+          }}
+          uiSettings={{
+            myLocationButtonEnabled: false,
+          }}
+          colorScheme={GoogleMaps.MapColorScheme.DARK}
+          onMarkerClick={handleMarkerClick}
+        />
+      )}
 
       <LinearGradient
         colors={['rgba(10,10,15,0.95)', 'rgba(10,10,15,0.6)', 'transparent']}
