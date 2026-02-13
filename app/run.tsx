@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppleMaps, GoogleMaps } from 'expo-maps';
+import MapView, { Polyline, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Pause, Square, Play, X, Zap, Grid3x3, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -17,8 +17,7 @@ export default function RunScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { startRun, updateRunPath, endRun, currentRun, userLocation } = useApp();
-  const appleMapRef = useRef<AppleMaps.MapView>(null);
-  const googleMapRef = useRef<GoogleMaps.MapView>(null);
+  const mapRef = useRef<MapView>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [path, setPath] = useState<Coordinate[]>([userLocation]);
@@ -75,18 +74,12 @@ export default function RunScreen() {
           lastCellUpdate = currentTime;
         }
 
-        if (Platform.OS === 'ios') {
-          appleMapRef.current?.setCameraPosition({
-            coordinates: { latitude: newLat, longitude: newLng },
-            zoom: 16,
-          });
-        } else {
-          googleMapRef.current?.setCameraPosition({
-            coordinates: { latitude: newLat, longitude: newLng },
-            zoom: 16,
-            duration: 500,
-          });
-        }
+        mapRef.current?.animateToRegion({
+          latitude: newLat,
+          longitude: newLng,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        }, 500);
       }
     }, 1000);
   }, [userLocation, isPaused, updateRunPath, flashCellConquest]);
@@ -198,62 +191,40 @@ export default function RunScreen() {
     Math.abs(path[0].latitude - path[path.length - 1].latitude) < 0.0005 &&
     Math.abs(path[0].longitude - path[path.length - 1].longitude) < 0.0005;
 
-  const mapPolylines = path.length > 1 ? [{
-    id: 'run-path',
-    coordinates: path,
-    color: isPathClosed ? Colors.primary : Colors.secondary,
-    width: 6,
-  }] : [];
-
-  const mapCircles = path.length > 0 ? [{
-    id: 'start-point',
-    center: path[0],
-    radius: 30,
-    color: Colors.primary + '30',
-    lineColor: Colors.primary,
-    lineWidth: 3,
-  }] : [];
-
-  const runCameraPosition = {
-    coordinates: {
-      latitude: DEFAULT_LOCATION.latitude,
-      longitude: DEFAULT_LOCATION.longitude,
-    },
-    zoom: 16,
+  const initialRegion = {
+    latitude: DEFAULT_LOCATION.latitude,
+    longitude: DEFAULT_LOCATION.longitude,
+    latitudeDelta: 0.005,
+    longitudeDelta: 0.005,
   };
 
   return (
     <View style={styles.container}>
-      {Platform.OS === 'ios' ? (
-        <AppleMaps.View
-          ref={appleMapRef}
-          style={styles.map}
-          cameraPosition={runCameraPosition}
-          polylines={mapPolylines}
-          circles={mapCircles}
-          properties={{
-            isMyLocationEnabled: true,
-          }}
-          uiSettings={{
-            myLocationButtonEnabled: false,
-          }}
-        />
-      ) : (
-        <GoogleMaps.View
-          ref={googleMapRef}
-          style={styles.map}
-          cameraPosition={runCameraPosition}
-          polylines={mapPolylines}
-          circles={mapCircles}
-          properties={{
-            isMyLocationEnabled: true,
-          }}
-          uiSettings={{
-            myLocationButtonEnabled: false,
-          }}
-          colorScheme={GoogleMaps.MapColorScheme.DARK}
-        />
-      )}
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        initialRegion={initialRegion}
+        showsUserLocation
+        showsMyLocationButton={false}
+      >
+        {path.length > 1 && (
+          <Polyline
+            coordinates={path}
+            strokeColor={isPathClosed ? Colors.primary : Colors.secondary}
+            strokeWidth={6}
+          />
+        )}
+        {path.length > 0 && (
+          <Circle
+            center={path[0]}
+            radius={30}
+            fillColor={Colors.primary + '30'}
+            strokeColor={Colors.primary}
+            strokeWidth={3}
+          />
+        )}
+      </MapView>
 
       <Animated.View 
         style={[

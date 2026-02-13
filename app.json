@@ -16,6 +16,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.rork.territorios-de-corrida",
+      "config": {
+        "googleMapsApiKey": "AIzaSyDyGHObvGGw-N_VXKonUuTyq2TmVk6SzaE"
+      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Este app precisa da sua localização para rastrear suas corridas e conquistar territórios.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Este app precisa da sua localização para rastrear suas corridas em segundo plano."
@@ -25,6 +28,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDyGHObvGGw-N_VXKonUuTyq2TmVk6SzaE"
+        }
       },
       "package": "app.rork.territorios_de_corrida",
       "permissions": [
@@ -45,14 +53,7 @@
         }
       ],
       "expo-font",
-      "expo-web-browser",
-      [
-        "expo-maps",
-        {
-          "requestLocationPermission": true,
-          "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
-        }
-      ]
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
