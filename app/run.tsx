@@ -2,13 +2,13 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MapView, { Polyline, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Polyline, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Pause, Square, Play, X, Zap, Grid3x3, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
 import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
-import { DEFAULT_LOCATION } from '@/mocks/data';
 import { Coordinate } from '@/types';
 
 
@@ -16,17 +16,20 @@ import { Coordinate } from '@/types';
 export default function RunScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { startRun, updateRunPath, endRun, currentRun, userLocation } = useApp();
+  const { startRun, updateRunPath, endRun, currentRun, userLocation, setUserLocation } = useApp();
   const mapRef = useRef<MapView>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [path, setPath] = useState<Coordinate[]>([userLocation]);
+  const [startLocation, setStartLocation] = useState<Coordinate | null>(null);
+  const [path, setPath] = useState<Coordinate[]>([]);
   const [cellsConquered, setCellsConquered] = useState(0);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const recordingAnim = useRef(new Animated.Value(1)).current;
   const cellFlashAnim = useRef(new Animated.Value(0)).current;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const simulationRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const locationSubRef = useRef<Location.LocationSubscription | null>(null);
+  const isPausedRef = useRef(false);
+  const lastCellUpdateRef = useRef(0);
 
   const startTimer = useCallback(() => {
     intervalRef.current = setInterval(() => {
@@ -50,39 +53,67 @@ export default function RunScreen() {
     ]).start();
   }, [cellFlashAnim]);
 
-  const startLocationSimulation = useCallback(() => {
-    let angle = 0;
-    const centerLat = userLocation.latitude;
-    const centerLng = userLocation.longitude;
-    const radius = 0.002;
-    let lastCellUpdate = 0;
+  const startLocationTracking = useCallback(async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('Location permission denied');
+      return;
+    }
 
-    simulationRef.current = setInterval(() => {
-      if (!isPaused) {
-        angle += 0.15;
-        const newLat = centerLat + radius * Math.sin(angle);
-        const newLng = centerLng + radius * Math.cos(angle);
-        const newPoint = { latitude: newLat, longitude: newLng };
-        
+    // Get initial position for the pin
+    const currentPos = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
+    const initialCoord: Coordinate = {
+      latitude: currentPos.coords.latitude,
+      longitude: currentPos.coords.longitude,
+    };
+    setStartLocation(initialCoord);
+    setPath([initialCoord]);
+    setUserLocation(initialCoord);
+
+    mapRef.current?.animateToRegion({
+      latitude: initialCoord.latitude,
+      longitude: initialCoord.longitude,
+      latitudeDelta: 0.005,
+      longitudeDelta: 0.005,
+    }, 500);
+
+    // Watch position updates
+    locationSubRef.current = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 2000,
+        distanceInterval: 3,
+      },
+      (location) => {
+        if (isPausedRef.current) return;
+
+        const newPoint: Coordinate = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+
         setPath((prev) => [...prev, newPoint]);
         updateRunPath(newPoint);
+        setUserLocation(newPoint);
 
         const currentTime = Date.now();
-        if (currentTime - lastCellUpdate > 3000) {
+        if (currentTime - lastCellUpdateRef.current > 3000) {
           setCellsConquered(prev => prev + 1);
           flashCellConquest();
-          lastCellUpdate = currentTime;
+          lastCellUpdateRef.current = currentTime;
         }
 
         mapRef.current?.animateToRegion({
-          latitude: newLat,
-          longitude: newLng,
+          latitude: newPoint.latitude,
+          longitude: newPoint.longitude,
           latitudeDelta: 0.005,
           longitudeDelta: 0.005,
         }, 500);
       }
-    }, 1000);
-  }, [userLocation, isPaused, updateRunPath, flashCellConquest]);
+    );
+  }, [updateRunPath, flashCellConquest, setUserLocation]);
 
   const startAnimations = useCallback(() => {
     Animated.loop(
@@ -119,35 +150,37 @@ export default function RunScreen() {
   useEffect(() => {
     startRun();
     startTimer();
-    startLocationSimulation();
+    startLocationTracking();
     startAnimations();
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      if (simulationRef.current) clearInterval(simulationRef.current);
+      if (locationSubRef.current) locationSubRef.current.remove();
     };
-  }, [startRun, startTimer, startLocationSimulation, startAnimations]);
+  }, []);
 
   const togglePause = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsPaused(!isPaused);
-    
-    if (!isPaused && intervalRef.current) {
+    const newPaused = !isPaused;
+    setIsPaused(newPaused);
+    isPausedRef.current = newPaused;
+
+    if (newPaused && intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
-    } else {
+    } else if (!newPaused) {
       startTimer();
     }
   }, [isPaused, startTimer]);
 
   const handleStop = useCallback(async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
+
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (simulationRef.current) clearInterval(simulationRef.current);
+    if (locationSubRef.current) locationSubRef.current.remove();
 
     const result = await endRun();
-    
+
     router.replace({
       pathname: '/run-summary',
       params: {
@@ -165,7 +198,7 @@ export default function RunScreen() {
   const handleCancel = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (simulationRef.current) clearInterval(simulationRef.current);
+    if (locationSubRef.current) locationSubRef.current.remove();
     router.back();
   }, [router]);
 
@@ -192,8 +225,8 @@ export default function RunScreen() {
     Math.abs(path[0].longitude - path[path.length - 1].longitude) < 0.0005;
 
   const initialRegion = {
-    latitude: DEFAULT_LOCATION.latitude,
-    longitude: DEFAULT_LOCATION.longitude,
+    latitude: startLocation?.latitude || userLocation.latitude,
+    longitude: startLocation?.longitude || userLocation.longitude,
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   };
@@ -215,13 +248,11 @@ export default function RunScreen() {
             strokeWidth={6}
           />
         )}
-        {path.length > 0 && (
-          <Circle
-            center={path[0]}
-            radius={30}
-            fillColor={Colors.primary + '30'}
-            strokeColor={Colors.primary}
-            strokeWidth={3}
+        {startLocation && (
+          <Marker
+            coordinate={startLocation}
+            title="Início"
+            pinColor={Colors.primary}
           />
         )}
       </MapView>
@@ -265,8 +296,8 @@ export default function RunScreen() {
       </LinearGradient>
 
       <LinearGradient
-        colors={['transparent', 'rgba(10,10,15,0.95)', Colors.background]}
-        locations={[0, 0.25, 0.45]}
+        colors={['transparent', 'rgba(10,10,15,0.7)', 'rgba(10,10,15,0.9)']}
+        locations={[0, 0.5, 1]}
         style={[styles.bottomGradient, { paddingBottom: insets.bottom + 24 }]}
       >
         <View style={styles.metricsContainer}>
@@ -444,7 +475,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 100,
+    paddingTop: 40,
     alignItems: 'center',
   },
   metricsContainer: {
