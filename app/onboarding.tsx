@@ -1,22 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Dimensions, 
-  FlatList, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+  FlatList,
   Animated,
-  Platform
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Zap, Timer, TrendingUp, ChevronRight, Play } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { Zap, Timer, TrendingUp, ChevronRight, Play, ArrowRight } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 
 const { width, height } = Dimensions.get('window');
+
+const BG = '#0B1A0B';
+const SURFACE = '#0F220F';
+const BORDER_DEFAULT = '#1E361E';
+const TEXT_PRIMARY = '#FFFFFF';
+const TEXT_SECONDARY = '#7A9A7A';
+const TEXT_MUTED = '#4A6A4A';
+const LIME = '#B8E030';
+const LIME_TEXT = '#0B1A0B';
+const TEAL = '#00F5A0';
+const AMBER = '#F5A300';
 
 const ONBOARDING_STEPS = [
   {
@@ -45,49 +53,27 @@ const ONBOARDING_STEPS = [
   },
 ];
 
-const AnimatedWave = ({ delay = 0, color = Colors.primary }) => {
+const AnimatedWave = ({ delay = 0, color = LIME }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const animation = Animated.loop(
       Animated.sequence([
         Animated.delay(delay),
-        Animated.timing(animatedValue, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
+        Animated.timing(animatedValue, { toValue: 1, duration: 2000, useNativeDriver: true }),
+        Animated.timing(animatedValue, { toValue: 0, duration: 2000, useNativeDriver: true }),
       ])
     );
     animation.start();
     return () => animation.stop();
   }, [animatedValue, delay]);
 
-  const translateY = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -15],
-  });
-
-  const opacity = animatedValue.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.3, 0.7, 0.3],
-  });
+  const translateY = animatedValue.interpolate({ inputRange: [0, 1], outputRange: [0, -15] });
+  const opacity = animatedValue.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.3, 0.7, 0.3] });
 
   return (
     <Animated.View
-      style={[
-        styles.wave,
-        {
-          backgroundColor: color,
-          transform: [{ translateY }],
-          opacity,
-        },
-      ]}
+      style={[styles.wave, { backgroundColor: color, transform: [{ translateY }], opacity }]}
     />
   );
 };
@@ -101,28 +87,12 @@ const PulsingCircle = ({ size = 200, delay = 0 }) => {
       Animated.sequence([
         Animated.delay(delay),
         Animated.parallel([
-          Animated.timing(scaleAnim, {
-            toValue: 1.2,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacityAnim, {
-            toValue: 0,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
+          Animated.timing(scaleAnim, { toValue: 1.2, duration: 1500, useNativeDriver: true }),
+          Animated.timing(opacityAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
         ]),
         Animated.parallel([
-          Animated.timing(scaleAnim, {
-            toValue: 0.8,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacityAnim, {
-            toValue: 0.6,
-            duration: 0,
-            useNativeDriver: true,
-          }),
+          Animated.timing(scaleAnim, { toValue: 0.8, duration: 0, useNativeDriver: true }),
+          Animated.timing(opacityAnim, { toValue: 0.6, duration: 0, useNativeDriver: true }),
         ]),
       ])
     );
@@ -134,13 +104,7 @@ const PulsingCircle = ({ size = 200, delay = 0 }) => {
     <Animated.View
       style={[
         styles.pulsingCircle,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          transform: [{ scale: scaleAnim }],
-          opacity: opacityAnim,
-        },
+        { width: size, height: size, borderRadius: size / 2, transform: [{ scale: scaleAnim }], opacity: opacityAnim },
       ]}
     />
   );
@@ -152,45 +116,31 @@ const HeroVisual = () => {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(runnerAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(runnerAnim, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
+        Animated.timing(runnerAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(runnerAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
       ])
     ).start();
   }, [runnerAnim]);
 
-  const bounceY = runnerAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -8],
-  });
+  const bounceY = runnerAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
 
   return (
     <View style={styles.heroVisual}>
       <PulsingCircle size={280} delay={0} />
       <PulsingCircle size={220} delay={300} />
       <PulsingCircle size={160} delay={600} />
-      
+
       <View style={styles.heroIconContainer}>
-        <LinearGradient
-          colors={[Colors.primary, Colors.primaryDark]}
-          style={styles.heroIconGradient}
-        >
+        <View style={styles.heroIconBox}>
           <Animated.View style={{ transform: [{ translateY: bounceY }] }}>
-            <Play size={48} color={Colors.background} fill={Colors.background} />
+            <Play size={48} color={LIME_TEXT} fill={LIME_TEXT} />
           </Animated.View>
-        </LinearGradient>
+        </View>
       </View>
-      
+
       <View style={styles.heroLines}>
         {[...Array(5)].map((_, i) => (
-          <AnimatedWave key={i} delay={i * 200} color={Colors.primary} />
+          <AnimatedWave key={i} delay={i * 200} color={LIME} />
         ))}
       </View>
     </View>
@@ -223,9 +173,9 @@ const HowItWorksVisual = () => {
   }, [step1Anim, step2Anim, step3Anim]);
 
   const steps = [
-    { anim: step1Anim, icon: Play, label: 'Correr', color: Colors.primary },
-    { anim: step2Anim, icon: Timer, label: 'Fechar Loop', color: Colors.secondary },
-    { anim: step3Anim, icon: Zap, label: 'Conquistar', color: Colors.warning },
+    { anim: step1Anim, icon: Play, label: 'Correr', color: LIME },
+    { anim: step2Anim, icon: Timer, label: 'Fechar Loop', color: TEAL },
+    { anim: step3Anim, icon: Zap, label: 'Conquistar', color: AMBER },
   ];
 
   return (
@@ -239,14 +189,7 @@ const HowItWorksVisual = () => {
               styles.stepItem,
               {
                 opacity: step.anim,
-                transform: [
-                  {
-                    scale: step.anim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.5, 1],
-                    }),
-                  },
-                ],
+                transform: [{ scale: step.anim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }],
               },
             ]}
           >
@@ -256,7 +199,7 @@ const HowItWorksVisual = () => {
             <Text style={[styles.stepLabel, { color: step.color }]}>{step.label}</Text>
             {index < steps.length - 1 && (
               <View style={styles.stepConnector}>
-                <ChevronRight size={20} color={Colors.textTertiary} />
+                <ChevronRight size={20} color={TEXT_MUTED} />
               </View>
             )}
           </Animated.View>
@@ -278,14 +221,7 @@ const BenefitsVisual = () => {
   useEffect(() => {
     Animated.stagger(
       200,
-      anims.map((anim) =>
-        Animated.spring(anim, {
-          toValue: 1,
-          friction: 6,
-          tension: 40,
-          useNativeDriver: true,
-        })
-      )
+      anims.map((anim) => Animated.spring(anim, { toValue: 1, friction: 6, tension: 40, useNativeDriver: true }))
     ).start();
   }, [anims]);
 
@@ -300,24 +236,14 @@ const BenefitsVisual = () => {
               styles.benefitItem,
               {
                 opacity: anims[index],
-                transform: [
-                  {
-                    translateX: anims[index].interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-50, 0],
-                    }),
-                  },
-                ],
+                transform: [{ translateX: anims[index].interpolate({ inputRange: [0, 1], outputRange: [-50, 0] }) }],
               },
             ]}
           >
             <View style={styles.benefitIconWrapper}>
-              <LinearGradient
-                colors={[Colors.primary + '30', Colors.primary + '10']}
-                style={styles.benefitIconBg}
-              >
-                <IconComponent size={24} color={Colors.primary} />
-              </LinearGradient>
+              <View style={styles.benefitIconBox}>
+                <IconComponent size={24} color={LIME} />
+              </View>
             </View>
             <View style={styles.benefitTextContainer}>
               <Text style={styles.benefitValue}>{benefit.value}</Text>
@@ -336,43 +262,20 @@ const CTAVisual = () => {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
+        Animated.timing(glowAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
       ])
     ).start();
   }, [glowAnim]);
 
-  const glowOpacity = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.4, 0.8],
-  });
-
-  const glowScale = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.1],
-  });
+  const glowOpacity = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.8] });
+  const glowScale = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] });
 
   return (
     <View style={styles.ctaVisual}>
-      <Animated.View
-        style={[
-          styles.ctaGlow,
-          {
-            opacity: glowOpacity,
-            transform: [{ scale: glowScale }],
-          },
-        ]}
-      />
+      <Animated.View style={[styles.ctaGlow, { opacity: glowOpacity, transform: [{ scale: glowScale }] }]} />
       <View style={styles.ctaIconContainer}>
-        <Zap size={64} color={Colors.primary} fill={Colors.primary} />
+        <Zap size={64} color={LIME} fill={LIME} />
       </View>
     </View>
   );
@@ -403,16 +306,11 @@ export default function OnboardingScreen() {
 
   const renderVisual = (visualType: string) => {
     switch (visualType) {
-      case 'hero':
-        return <HeroVisual />;
-      case 'howItWorks':
-        return <HowItWorksVisual />;
-      case 'benefits':
-        return <BenefitsVisual />;
-      case 'cta':
-        return <CTAVisual />;
-      default:
-        return null;
+      case 'hero': return <HeroVisual />;
+      case 'howItWorks': return <HowItWorksVisual />;
+      case 'benefits': return <BenefitsVisual />;
+      case 'cta': return <CTAVisual />;
+      default: return null;
     }
   };
 
@@ -437,17 +335,8 @@ export default function OnboardingScreen() {
               onPress={handleNext}
               activeOpacity={0.85}
             >
-              <LinearGradient
-                colors={[Colors.primary, Colors.primaryDark]}
-                style={styles.mainCTAGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Text style={styles.mainCTAText}>Começar Agora</Text>
-                <View style={styles.mainCTAIconWrapper}>
-                  <ChevronRight size={22} color={Colors.background} strokeWidth={3} />
-                </View>
-              </LinearGradient>
+              <Text style={styles.mainCTAText}>Começar Agora</Text>
+              <ArrowRight size={22} color={LIME_TEXT} strokeWidth={2.5} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -467,12 +356,6 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[Colors.background, Colors.backgroundSecondary, Colors.background]}
-        style={StyleSheet.absoluteFill}
-        locations={[0, 0.5, 1]}
-      />
-
       <View style={styles.bgPattern}>
         <View style={[styles.bgLine, { top: '20%', left: -100 }]} />
         <View style={[styles.bgLine, { top: '40%', right: -100 }]} />
@@ -510,47 +393,19 @@ export default function OnboardingScreen() {
         <View style={styles.pagination}>
           {ONBOARDING_STEPS.map((_, index) => {
             const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
-            const dotWidth = scrollX.interpolate({
-              inputRange,
-              outputRange: [8, 32, 8],
-              extrapolate: 'clamp',
-            });
-            const opacity = scrollX.interpolate({
-              inputRange,
-              outputRange: [0.25, 1, 0.25],
-              extrapolate: 'clamp',
-            });
+            const dotWidth = scrollX.interpolate({ inputRange, outputRange: [6, 28, 6], extrapolate: 'clamp' });
+            const opacity = scrollX.interpolate({ inputRange, outputRange: [0.25, 1, 0.25], extrapolate: 'clamp' });
 
             return (
-              <Animated.View
-                key={index}
-                style={[
-                  styles.dot,
-                  {
-                    width: dotWidth,
-                    opacity,
-                  },
-                ]}
-              />
+              <Animated.View key={index} style={[styles.dot, { width: dotWidth, opacity }]} />
             );
           })}
         </View>
 
         {!isLastSlide && (
-          <TouchableOpacity
-            style={styles.nextButton}
-            onPress={handleNext}
-            activeOpacity={0.85}
-          >
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryDark]}
-              style={styles.nextButtonGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Text style={styles.nextButtonText}>Continuar</Text>
-              <ChevronRight size={20} color={Colors.background} strokeWidth={2.5} />
-            </LinearGradient>
+          <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.85}>
+            <Text style={styles.nextButtonText}>Continuar</Text>
+            <ArrowRight size={20} color={LIME_TEXT} strokeWidth={2.5} />
           </TouchableOpacity>
         )}
       </View>
@@ -561,7 +416,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: BG,
   },
   bgPattern: {
     ...StyleSheet.absoluteFillObject,
@@ -571,8 +426,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: width * 1.5,
     height: 1,
-    backgroundColor: Colors.primary,
-    opacity: 0.06,
+    backgroundColor: LIME,
+    opacity: 0.05,
     transform: [{ rotate: '-15deg' }],
   },
   header: {
@@ -586,10 +441,13 @@ const styles = StyleSheet.create({
   skipButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: BORDER_DEFAULT,
   },
   skipText: {
-    fontSize: 15,
-    color: Colors.textSecondary,
+    fontSize: 14,
+    color: TEXT_SECONDARY,
     fontWeight: '500' as const,
   },
   slide: {
@@ -608,14 +466,14 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 36,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
     lineHeight: 44,
     marginBottom: 12,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 17,
-    color: Colors.textSecondary,
+    color: TEXT_SECONDARY,
     lineHeight: 24,
   },
   footer: {
@@ -625,36 +483,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-    gap: 8,
+    marginBottom: 20,
+    gap: 6,
   },
   dot: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.primary,
+    backgroundColor: LIME,
   },
   nextButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  nextButtonGradient: {
+    backgroundColor: LIME,
+    borderRadius: 8,
+    paddingVertical: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
     gap: 8,
   },
   nextButtonText: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.background,
+    color: LIME_TEXT,
     letterSpacing: 0.3,
   },
+
+  // Hero visual
   heroVisual: {
     width: 280,
     height: 280,
@@ -664,23 +517,19 @@ const styles = StyleSheet.create({
   pulsingCircle: {
     position: 'absolute',
     borderWidth: 2,
-    borderColor: Colors.primary,
+    borderColor: LIME,
     backgroundColor: 'transparent',
   },
   heroIconContainer: {
     zIndex: 10,
   },
-  heroIconGradient: {
+  heroIconBox: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: 8,
+    backgroundColor: LIME,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    elevation: 12,
   },
   heroLines: {
     position: 'absolute',
@@ -693,6 +542,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 2,
   },
+
+  // How it works visual
   howItWorksVisual: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -706,7 +557,7 @@ const styles = StyleSheet.create({
   stepIcon: {
     width: 64,
     height: 64,
-    borderRadius: 20,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -721,26 +572,31 @@ const styles = StyleSheet.create({
     right: -20,
     top: 20,
   },
+
+  // Benefits visual
   benefitsVisual: {
     width: '100%',
-    gap: 16,
+    gap: 12,
   },
   benefitItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
+    backgroundColor: SURFACE,
+    borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: BORDER_DEFAULT,
   },
   benefitIconWrapper: {
     marginRight: 16,
   },
-  benefitIconBg: {
+  benefitIconBox: {
     width: 52,
     height: 52,
-    borderRadius: 14,
+    borderRadius: 8,
+    backgroundColor: LIME + '20',
+    borderWidth: 1,
+    borderColor: LIME + '40',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -750,14 +606,16 @@ const styles = StyleSheet.create({
   benefitValue: {
     fontSize: 24,
     fontWeight: '800' as const,
-    color: Colors.primary,
+    color: LIME,
     marginBottom: 2,
   },
   benefitText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: TEXT_SECONDARY,
     fontWeight: '500' as const,
   },
+
+  // CTA visual
   ctaVisual: {
     width: 200,
     height: 200,
@@ -768,46 +626,33 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 180,
     height: 180,
-    borderRadius: 90,
-    backgroundColor: Colors.primary,
-    opacity: 0.15,
+    borderRadius: 8,
+    backgroundColor: LIME,
+    opacity: 0.12,
   },
   ctaIconContainer: {
     zIndex: 10,
   },
+
+  // CTA buttons (last slide)
   ctaButtonsContainer: {
     paddingTop: 8,
     gap: 12,
   },
   mainCTAButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  mainCTAGradient: {
+    backgroundColor: LIME,
+    borderRadius: 8,
+    paddingVertical: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
     gap: 10,
   },
   mainCTAText: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.background,
+    color: LIME_TEXT,
     letterSpacing: 0.5,
-  },
-  mainCTAIconWrapper: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   secondaryCTA: {
     alignItems: 'center',
@@ -815,7 +660,7 @@ const styles = StyleSheet.create({
   },
   secondaryCTAText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: TEXT_SECONDARY,
     fontWeight: '500' as const,
   },
 });
