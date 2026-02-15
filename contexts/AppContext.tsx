@@ -125,21 +125,23 @@ export const [AppProvider, useApp] = createContextHook(() => {
   }, [user, userLocation]);
 
   const updateRunPath = useCallback((newPoint: Coordinate) => {
-    if (!currentRun) return;
-    
-    const updatedPath = [...currentRun.path, newPoint];
-    const distance = calculatePathDistance(updatedPath);
-    const duration = (Date.now() - currentRun.startTime.getTime()) / 1000;
-    const pace = duration > 0 && distance > 0 ? duration / 60 / distance : 0;
+    setCurrentRun(prev => {
+      if (!prev) return prev;
 
-    setCurrentRun({
-      ...currentRun,
-      path: updatedPath,
-      distance,
-      duration,
-      pace,
+      const updatedPath = [...prev.path, newPoint];
+      const distance = calculatePathDistance(updatedPath);
+      const duration = (Date.now() - prev.startTime.getTime()) / 1000;
+      const pace = duration > 0 && distance > 0 ? duration / 60 / distance : 0;
+
+      return {
+        ...prev,
+        path: updatedPath,
+        distance,
+        duration,
+        pace,
+      };
     });
-  }, [currentRun]);
+  }, []);
 
   const endRun = useCallback(async () => {
     if (!currentRun || !user) return null;
