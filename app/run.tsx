@@ -343,21 +343,24 @@ export default function RunScreen() {
         </View>
 
         <View style={styles.controlsContainer}>
-          <TouchableOpacity 
-            style={styles.pauseButton}
-            onPress={togglePause}
-            activeOpacity={0.8}
-          >
-            {isPaused ? (
-              <Play size={26} color={Colors.text} fill={Colors.text} />
-            ) : (
-              <Pause size={26} color={Colors.text} />
-            )}
-          </TouchableOpacity>
+          <View style={styles.pauseButtonContainer}>
+            <TouchableOpacity
+              style={[styles.pauseButton, isPaused && styles.pauseButtonActive]}
+              onPress={togglePause}
+              activeOpacity={0.8}
+            >
+              {isPaused ? (
+                <Play size={26} color={Colors.text} fill={Colors.text} />
+              ) : (
+                <Pause size={26} color={Colors.text} />
+              )}
+            </TouchableOpacity>
+            <Text style={styles.pauseButtonLabel}>{isPaused ? 'RETOMAR' : 'PAUSAR'}</Text>
+          </View>
 
           <View style={styles.stopButtonContainer}>
             <Animated.View style={[styles.stopButtonPulse, { transform: [{ scale: pulseAnim }] }]} />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.stopButton}
               onPress={handleStop}
               activeOpacity={0.9}
@@ -369,9 +372,8 @@ export default function RunScreen() {
                 <Square size={30} color={Colors.text} fill={Colors.text} />
               </LinearGradient>
             </TouchableOpacity>
+            <Text style={styles.stopButtonLabel}>ENCERRAR</Text>
           </View>
-
-          <View style={styles.placeholderButton} />
         </View>
 
         <View style={styles.hintContainer}>
@@ -557,20 +559,34 @@ const styles = StyleSheet.create({
   },
   controlsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'center',
-    gap: 28,
+    gap: 32,
     marginBottom: 20,
   },
+  pauseButtonContainer: {
+    alignItems: 'center',
+    gap: 8,
+  },
   pauseButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: Colors.border,
+  },
+  pauseButtonActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryMuted,
+  },
+  pauseButtonLabel: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: Colors.textSecondary,
+    letterSpacing: 1.5,
   },
   stopButtonContainer: {
     position: 'relative',
@@ -583,6 +599,7 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 55,
     backgroundColor: Colors.accent + '20',
+    top: 0,
   },
   stopButton: {
     width: 84,
@@ -607,9 +624,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  placeholderButton: {
-    width: 60,
-    height: 60,
+  stopButtonLabel: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: Colors.textSecondary,
+    letterSpacing: 1.5,
+    marginTop: 8,
   },
   hintContainer: {
     alignItems: 'center',
