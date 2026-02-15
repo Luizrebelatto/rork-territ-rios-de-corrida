@@ -1,8 +1,36 @@
-import { Tabs } from 'expo-router';
-import { Map, Trophy, Users, User } from 'lucide-react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { Map, Trophy, Users, User, Play } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, Platform, View } from 'react-native';
+import { StyleSheet, Platform, View, TouchableOpacity } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
+import { useApp } from '@/contexts/AppContext';
+
+function RunButton() {
+  const router = useRouter();
+  const { canCreateTerritory } = useApp();
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    if (!canCreateTerritory) {
+      router.push('/paywall');
+      return;
+    }
+    router.push('/run');
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.runButton}
+      onPress={handlePress}
+      activeOpacity={0.85}
+    >
+      <View style={styles.runButtonInner}>
+        <Play size={26} color={Colors.background} fill={Colors.background} />
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function TabLayout() {
   return (
@@ -36,6 +64,14 @@ export default function TabLayout() {
               <Trophy size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
             </View>
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="run-tab"
+        options={{
+          title: '',
+          tabBarLabel: () => null,
+          tabBarButton: () => <RunButton />,
         }}
       />
       <Tabs.Screen
@@ -101,5 +137,33 @@ const styles = StyleSheet.create({
   },
   iconContainerActive: {
     backgroundColor: Colors.primaryMuted,
+  },
+  runButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 0,
+  },
+  runButtonInner: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -22,
+    borderWidth: 3,
+    borderColor: Colors.backgroundSecondary,
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.5,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
 });
