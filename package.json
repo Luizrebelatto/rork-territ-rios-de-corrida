@@ -6,9 +6,9 @@
     "start": "bunx rork start -p gxofg2nwysdhc4bfsqz0u --tunnel",
     "start-web": "bunx rork start -p gxofg2nwysdhc4bfsqz0u --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p gxofg2nwysdhc4bfsqz0u --web --tunnel",
-    "lint": "expo lint",
-    "android": "expo run:android",
-    "ios": "expo run:ios"
+    "lint": "npx expo lint",
+    "android": "npx expo run:android",
+    "ios": "npx expo run:ios"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
