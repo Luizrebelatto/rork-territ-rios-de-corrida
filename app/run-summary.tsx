@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Share } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Clock, Zap, Flame, Share2, X, Shield, Grid3x3, TrendingUp, Star } from 'lucide-react-native';
+import { Clock, Zap, Share2, X, Shield, Grid3x3, TrendingUp, Star } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -37,7 +37,6 @@ export default function RunSummaryScreen() {
   const pace = duration > 0 && distance > 0 ? duration / 60 / distance : 0;
   const paceMinutes = Math.floor(pace);
   const paceSeconds = Math.round((pace - paceMinutes) * 60);
-  const calories = Math.round(distance * 45);
   const xpEarned = Math.round(distance * 10) + (territoryCreated ? 50 : 0) + cellsConquered * 5;
 
   const formatDuration = (seconds: number) => {
@@ -224,12 +223,6 @@ export default function RunSummaryScreen() {
               value={`${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}`}
               label="Avg Pace"
               color={Colors.tertiary}
-            />
-            <MetricItem 
-              icon={<Flame size={18} color={Colors.accent} />}
-              value={calories.toString()}
-              label="Calories"
-              color={Colors.accent}
             />
           </View>
         </Animated.View>

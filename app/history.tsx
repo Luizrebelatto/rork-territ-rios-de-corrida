@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Clock, Flame, TrendingUp, Calendar, Shield } from 'lucide-react-native';
+import { ChevronLeft, Clock, TrendingUp, Calendar, Shield } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
@@ -141,11 +141,6 @@ function RunCard({
           <Text style={styles.runStatValue}>
             {paceMinutes}:{paceSeconds.toString().padStart(2, '0')} /km
           </Text>
-        </View>
-        <View style={styles.runStatDot} />
-        <View style={styles.runStat}>
-          <Flame size={14} color={Colors.textTertiary} />
-          <Text style={styles.runStatValue}>{run.calories} cal</Text>
         </View>
       </View>
     </TouchableOpacity>
