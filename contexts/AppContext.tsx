@@ -160,17 +160,22 @@ export const [AppProvider, useApp] = createContextHook(() => {
         territories.filter(t => t.ownerId === user.id).length < FREE_TERRITORY_LIMIT;
 
       if (canCreateTerritory) {
+        const closedPath = [
+          ...completedRun.path,
+          completedRun.path[0],
+        ];
+
         newTerritory = {
           id: `territory-${Date.now()}`,
           name: `Zone ${territories.length + 1}`,
-          coordinates: completedRun.path,
+          coordinates: closedPath,
           ownerId: user.id,
           ownerName: user.name,
           ownerAvatar: user.avatar,
           color: Colors.territoryColors[territories.length % Colors.territoryColors.length],
-          area: calculatePolygonArea(completedRun.path),
+          area: calculatePolygonArea(closedPath),
           conqueredAt: new Date(),
-          pointsValue: Math.round(calculatePolygonArea(completedRun.path) * 1000),
+          pointsValue: Math.round(calculatePolygonArea(closedPath) * 1000),
         };
 
         const updatedTerritories = [...territories, newTerritory];
