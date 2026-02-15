@@ -22,12 +22,14 @@ export default function RunScreen() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [startLocation, setStartLocation] = useState<Coordinate | null>(null);
   const [path, setPath] = useState<Coordinate[]>([]);
+  const [livePosition, setLivePosition] = useState<Coordinate | null>(null);
   const [cellsConquered, setCellsConquered] = useState(0);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const recordingAnim = useRef(new Animated.Value(1)).current;
   const cellFlashAnim = useRef(new Animated.Value(0)).current;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const locationSubRef = useRef<Location.LocationSubscription | null>(null);
+  const liveLocationSubRef = useRef<Location.LocationSubscription | null>(null);
   const isPausedRef = useRef(false);
   const lastCellUpdateRef = useRef(0);
 
@@ -79,12 +81,36 @@ export default function RunScreen() {
       longitudeDelta: 0.005,
     }, 500);
 
-    // Watch position updates
+    // Watch position at high frequency to update the live drawing tip
+    liveLocationSubRef.current = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 500,
+        distanceInterval: 1,
+      },
+      (location) => {
+        if (isPausedRef.current) return;
+        const pos: Coordinate = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        setLivePosition(pos);
+        setUserLocation(pos);
+        mapRef.current?.animateToRegion({
+          latitude: pos.latitude,
+          longitude: pos.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        }, 300);
+      }
+    );
+
+    // Watch position updates to record path waypoints
     locationSubRef.current = await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.High,
         timeInterval: 2000,
-        distanceInterval: 3,
+        distanceInterval: 5,
       },
       (location) => {
         if (isPausedRef.current) return;
@@ -96,7 +122,6 @@ export default function RunScreen() {
 
         setPath((prev) => [...prev, newPoint]);
         updateRunPath(newPoint);
-        setUserLocation(newPoint);
 
         const currentTime = Date.now();
         if (currentTime - lastCellUpdateRef.current > 3000) {
@@ -104,13 +129,6 @@ export default function RunScreen() {
           flashCellConquest();
           lastCellUpdateRef.current = currentTime;
         }
-
-        mapRef.current?.animateToRegion({
-          latitude: newPoint.latitude,
-          longitude: newPoint.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        }, 500);
       }
     );
   }, [updateRunPath, flashCellConquest, setUserLocation]);
@@ -156,6 +174,7 @@ export default function RunScreen() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (locationSubRef.current) locationSubRef.current.remove();
+      if (liveLocationSubRef.current) liveLocationSubRef.current.remove();
     };
   }, []);
 
@@ -178,6 +197,7 @@ export default function RunScreen() {
 
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (locationSubRef.current) locationSubRef.current.remove();
+    if (liveLocationSubRef.current) liveLocationSubRef.current.remove();
 
     const result = await endRun();
 
@@ -199,6 +219,7 @@ export default function RunScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (locationSubRef.current) locationSubRef.current.remove();
+    if (liveLocationSubRef.current) liveLocationSubRef.current.remove();
     router.back();
   }, [router]);
 
@@ -220,9 +241,15 @@ export default function RunScreen() {
   const paceMinutes = Math.floor(pace);
   const paceSeconds = Math.round((pace - paceMinutes) * 60);
 
-  const isPathClosed = path.length >= 4 && 
-    Math.abs(path[0].latitude - path[path.length - 1].latitude) < 0.0005 &&
-    Math.abs(path[0].longitude - path[path.length - 1].longitude) < 0.0005;
+  // displayPath always ends at the live position so the drawing tracks the user exactly
+  const displayPath = livePosition && path.length > 0
+    ? [...path, livePosition]
+    : path;
+
+  const tip = displayPath.length > 0 ? displayPath[displayPath.length - 1] : null;
+  const isPathClosed = displayPath.length >= 4 && tip !== null &&
+    Math.abs(displayPath[0].latitude - tip.latitude) < 0.0005 &&
+    Math.abs(displayPath[0].longitude - tip.longitude) < 0.0005;
 
   const initialRegion = {
     latitude: startLocation?.latitude || userLocation.latitude,
@@ -241,17 +268,17 @@ export default function RunScreen() {
         showsUserLocation
         showsMyLocationButton={false}
       >
-        {isPathClosed && path.length >= 3 && (
+        {isPathClosed && displayPath.length >= 3 && (
           <Polygon
-            coordinates={path}
+            coordinates={displayPath}
             fillColor={Colors.primary + '33'}
             strokeColor={Colors.primary}
             strokeWidth={3}
           />
         )}
-        {!isPathClosed && path.length > 1 && (
+        {!isPathClosed && displayPath.length > 1 && (
           <Polyline
-            coordinates={path}
+            coordinates={displayPath}
             strokeColor={Colors.secondary}
             strokeWidth={4}
             lineDashPattern={[0]}
