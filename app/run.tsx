@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MapView, { Polyline, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Polyline, Polygon, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Pause, Square, Play, X, Zap, Grid3x3, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -241,11 +241,20 @@ export default function RunScreen() {
         showsUserLocation
         showsMyLocationButton={false}
       >
-        {path.length > 1 && (
+        {isPathClosed && path.length >= 3 && (
+          <Polygon
+            coordinates={path}
+            fillColor={Colors.primary + '33'}
+            strokeColor={Colors.primary}
+            strokeWidth={3}
+          />
+        )}
+        {!isPathClosed && path.length > 1 && (
           <Polyline
             coordinates={path}
-            strokeColor={isPathClosed ? Colors.primary : Colors.secondary}
-            strokeWidth={6}
+            strokeColor={Colors.secondary}
+            strokeWidth={4}
+            lineDashPattern={[0]}
           />
         )}
         {startLocation && (
@@ -369,10 +378,16 @@ export default function RunScreen() {
           {isPathClosed ? (
             <View style={styles.hintBadge}>
               <Zap size={14} color={Colors.primary} />
-              <Text style={styles.hintTextSuccess}>Territory ready! Stop to claim</Text>
+              <Text style={styles.hintTextSuccess}>Território pronto! Pare para conquistar</Text>
             </View>
           ) : (
-            <Text style={styles.hintText}>Return to start to close territory</Text>
+            <View style={styles.hintBadgeNeutral}>
+              <Text style={styles.hintText}>
+                {distance > 0
+                  ? `${distance.toFixed(2)} km percorridos — volte ao início para conquistar`
+                  : 'Corra para desenhar seu território'}
+              </Text>
+            </View>
           )}
         </View>
       </LinearGradient>
@@ -610,10 +625,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.primary + '40',
   },
+  hintBadgeNeutral: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    maxWidth: '90%',
+  },
   hintText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
+    textAlign: 'center',
   },
   hintTextSuccess: {
     fontSize: 14,
