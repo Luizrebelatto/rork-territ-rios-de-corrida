@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, Polygon, PROVIDER_GOOGLE } from 'react-native-maps';
-import { Play, Zap, Target, Navigation, Grid3x3, Crosshair, Shield, Swords } from 'lucide-react-native';
+import { Zap, Target, Navigation, Grid3x3, Crosshair, Shield, Swords } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -16,12 +16,9 @@ import { Territory } from '@/types';
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, isAuthenticated, hasOnboarded, territories, userLocation, canCreateTerritory, isLoading } = useApp();
+  const { user, isAuthenticated, hasOnboarded, territories, userLocation, isLoading } = useApp();
   const mapRef = useRef<MapView>(null);
   const [selectedTerritory, setSelectedTerritory] = useState<Territory | null>(null);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -30,61 +27,6 @@ export default function HomeScreen() {
       router.replace('/onboarding');
     }
   }, [isAuthenticated, hasOnboarded, isLoading]);
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [pulseAnim, glowAnim]);
-
-  const handleStartRun = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.92,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      if (!canCreateTerritory) {
-        router.push('/paywall');
-        return;
-      }
-      router.push('/run');
-    });
-  }, [canCreateTerritory, router, scaleAnim]);
 
   const centerOnUser = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -189,51 +131,12 @@ export default function HomeScreen() {
         </View>
       </LinearGradient>
 
-      <LinearGradient
-        colors={['transparent', 'rgba(10,10,15,0.8)', 'rgba(10,10,15,0.98)']}
-        style={[styles.bottomGradient, { paddingBottom: insets.bottom + 100 }]}
-      >
-        <Animated.View style={[styles.runButtonContainer, { transform: [{ scale: scaleAnim }] }]}>
-          <Animated.View 
-            style={[
-              styles.runButtonGlow, 
-              { 
-                transform: [{ scale: pulseAnim }],
-                opacity: glowAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.3, 0.6],
-                }),
-              }
-            ]} 
-          />
-          <Animated.View style={[styles.runButtonPulse, { transform: [{ scale: pulseAnim }] }]} />
-          <TouchableOpacity 
-            style={styles.runButton}
-            onPress={handleStartRun}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryDark] as const}
-              style={styles.runButtonGradient}
-            >
-              <Play size={40} color={Colors.background} fill={Colors.background} />
-            </LinearGradient>
-          </TouchableOpacity>
-        </Animated.View>
-
-        <View style={styles.runLabelContainer}>
-          <Text style={styles.runLabel}>CONQUER</Text>
-          <View style={styles.runLabelDot} />
-          <Text style={styles.runLabel}>TERRITORY</Text>
-        </View>
-      </LinearGradient>
-
       {selectedTerritory && (
         <TerritoryCard 
           territory={selectedTerritory} 
           isOwned={selectedTerritory.ownerId === user?.id}
           onClose={() => setSelectedTerritory(null)}
-          bottom={insets.bottom + 180}
+          bottom={insets.bottom + 90}
         />
       )}
     </View>
@@ -402,74 +305,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500' as const,
     color: Colors.textSecondary,
-  },
-  bottomGradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  runButtonContainer: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  runButtonGlow: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: Colors.primary,
-  },
-  runButtonPulse: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: Colors.primary + '25',
-  },
-  runButton: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.5,
-        shadowRadius: 20,
-      },
-      android: {
-        elevation: 20,
-      },
-    }),
-  },
-  runButtonGradient: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  runLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    gap: 8,
-  },
-  runLabel: {
-    fontSize: 13,
-    fontWeight: '800' as const,
-    color: Colors.textSecondary,
-    letterSpacing: 3,
-  },
-  runLabelDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.primary,
   },
   territoryMarker: {
     width: 22,
