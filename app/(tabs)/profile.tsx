@@ -1,19 +1,42 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  Alert,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Settings, Zap, Route, Crown, ChevronRight, LogOut, Target, Shield, Grid3x3, Star, Trophy } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Colors from '@/constants/colors';
+import {
+  ArrowLeft,
+  ChevronDown,
+  Crown,
+  Star,
+  Lock,
+  FileText,
+  Trophy,
+  MapPin,
+  LogOut,
+} from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { getLevelInfo } from '@/constants/levels';
 
-const BADGES = [
-  { id: '1', name: 'First Blood', icon: Target, color: Colors.accent, unlocked: true },
-  { id: '2', name: '10km Club', icon: Route, color: Colors.secondary, unlocked: true },
-  { id: '3', name: 'Conqueror', icon: Shield, color: Colors.primary, unlocked: false },
-  { id: '4', name: 'Marathon', icon: Trophy, color: Colors.warning, unlocked: false },
-];
+const BG = '#0B1A0B';
+const SURFACE = '#0F220F';
+const BORDER_DEFAULT = '#1E361E';
+const TEXT_PRIMARY = '#FFFFFF';
+const TEXT_SECONDARY = '#7A9A7A';
+const TEXT_MUTED = '#4A6A4A';
+const LIME = '#B8E030';
+const LIME_TEXT = '#0B1A0B';
+const GOLD = '#C8960C';
+const GOLD_LIGHT = '#F0C040';
+const GOLD_BG = '#1A1400';
+const GOLD_BORDER = '#8B6914';
+const RED = '#E05A4B';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -21,20 +44,21 @@ export default function ProfileScreen() {
   const { user, logout, userTerritories } = useApp();
 
   const levelInfo = user ? getLevelInfo(user.xp) : null;
+  const badgesEarned = 15;
 
   const handleLogout = () => {
     Alert.alert(
       'Logout',
-      'Are you sure you want to logout?',
+      'Tem certeza que deseja sair?',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sair',
           style: 'destructive',
           onPress: async () => {
             await logout();
             router.replace('/login');
-          }
+          },
         },
       ]
     );
@@ -43,583 +67,342 @@ export default function ProfileScreen() {
   if (!user) return null;
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <ArrowLeft size={22} color={TEXT_PRIMARY} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile & Settings</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
       >
-        <LinearGradient
-          colors={[Colors.primary + '12', Colors.background]}
-          style={[styles.headerGradient, { paddingTop: insets.top + 12 }]}
-        >
-          <View style={styles.headerActions}>
-            <View style={{ width: 46 }} />
-            <TouchableOpacity style={styles.settingsButton}>
-              <Settings size={20} color={Colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              {user.avatar ? (
-                <Image source={{ uri: user.avatar }} style={styles.avatar} />
-              ) : (
-                <LinearGradient
-                  colors={[Colors.primary, Colors.primaryDark] as const}
-                  style={styles.avatarPlaceholder}
-                >
-                  <Text style={styles.avatarText}>{user.name[0]}</Text>
-                </LinearGradient>
-              )}
-              <View style={styles.levelRing}>
-                <Text style={styles.levelRingText}>{levelInfo?.level}</Text>
+        {/* Profile Row */}
+        <View style={styles.profileRow}>
+          <View style={styles.avatarWrap}>
+            {user.avatar ? (
+              <Image source={{ uri: user.avatar }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarInitial}>{user.name[0]}</Text>
               </View>
-              {user.isPremium && (
-                <View style={styles.premiumBadge}>
-                  <Crown size={12} color={Colors.background} fill={Colors.background} />
-                </View>
-              )}
-            </View>
-            <Text style={styles.userName}>{user.name}</Text>
-            <View style={styles.titleTag}>
-              <Star size={12} color={Colors.warning} fill={Colors.warning} />
-              <Text style={styles.titleText}>{levelInfo?.title}</Text>
-            </View>
+            )}
           </View>
-        </LinearGradient>
-
-        <View style={styles.xpCard}>
-          <View style={styles.xpHeader}>
-            <View style={styles.xpInfo}>
-              <Zap size={18} color={Colors.warning} fill={Colors.warning} />
-              <Text style={styles.xpText}>{user.xp} XP</Text>
-            </View>
-            <Text style={styles.xpToNext}>
-              {levelInfo?.xpToNextLevel} to Lvl {(levelInfo?.level || 1) + 1}
+          <View style={styles.profileInfo}>
+            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={styles.userGroups}>
+              <Text style={styles.groupsLabel}>Groups: </Text>
+              City Sprinters, Global Conquerors
             </Text>
           </View>
-          <View style={styles.progressBar}>
-            <LinearGradient
-              colors={[Colors.primary, Colors.secondary]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.progressFill, { width: `${(levelInfo?.progress || 0) * 100}%` }]}
-            />
+        </View>
+
+        {/* Stat Cards */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <View style={styles.statIconBox}>
+              <Trophy size={22} color={LIME} />
+            </View>
+            <View style={styles.statContent}>
+              <Text style={styles.statLabel}>Badges{'\n'}Earned:</Text>
+              <Text style={styles.statValue}>{badgesEarned}</Text>
+            </View>
+          </View>
+
+          <View style={styles.statCard}>
+            <View style={styles.statIconBox}>
+              <MapPin size={22} color={LIME} />
+            </View>
+            <View style={styles.statContent}>
+              <Text style={styles.statLabel}>Territories{'\n'}Conquered:</Text>
+              <Text style={styles.statValue}>{user.territoriesCount}</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.statsGrid}>
-          <StatCard 
-            icon={<Zap size={22} color={Colors.warning} />}
-            value={user.totalPoints.toLocaleString()}
-            label="Points"
-            color={Colors.warning}
-          />
-          <StatCard 
-            icon={<Shield size={22} color={Colors.primary} />}
-            value={user.territoriesCount.toString()}
-            label="Territories"
-            color={Colors.primary}
-          />
-          <StatCard 
-            icon={<Route size={22} color={Colors.secondary} />}
-            value={user.totalDistance.toFixed(1)}
-            label="km Total"
-            color={Colors.secondary}
-          />
-          <StatCard 
-            icon={<Grid3x3 size={22} color={Colors.tertiary} />}
-            value={(Math.round(user.totalDistance / 5) || 0).toString()}
-            label="Runs"
-            color={Colors.tertiary}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Badges</Text>
-          <View style={styles.badgesGrid}>
-            {BADGES.map((badge) => (
-              <BadgeItem key={badge.id} badge={badge} />
-            ))}
-          </View>
-        </View>
-
+        {/* Premium Card */}
         {!user.isPremium && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.premiumCard}
             onPress={() => router.push('/paywall')}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <LinearGradient
-              colors={[Colors.warning + '18', Colors.warning + '05']}
-              style={styles.premiumGradient}
-            >
-              <View style={styles.premiumContent}>
-                <View style={styles.premiumIconContainer}>
-                  <Crown size={24} color={Colors.warning} />
-                </View>
-                <View style={styles.premiumText}>
-                  <Text style={styles.premiumTitle}>Go Pro</Text>
-                  <Text style={styles.premiumDescription}>Unlimited territories & stats</Text>
-                </View>
+            <View style={styles.premiumTop}>
+              <View style={styles.premiumTag}>
+                <Crown size={13} color={GOLD_LIGHT} fill={GOLD_LIGHT} />
+                <Text style={styles.premiumTagText}>Premium</Text>
               </View>
-              <ChevronRight size={20} color={Colors.warning} />
-            </LinearGradient>
+              <View style={styles.premiumMedal}>
+                <Star size={22} color={GOLD_LIGHT} fill={GOLD_LIGHT} />
+              </View>
+            </View>
+            <Text style={styles.premiumTitle}>Go PRO!</Text>
+            <Text style={styles.premiumSubtitle}>Unlock all features & more stats.</Text>
+            <View style={styles.upgradeButton}>
+              <Text style={styles.upgradeButtonText}>Upgrade Now</Text>
+            </View>
           </TouchableOpacity>
         )}
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>My Territories</Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{userTerritories.length}</Text>
-            </View>
-          </View>
-          {userTerritories.length === 0 ? (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconContainer}>
-                <Target size={36} color={Colors.textTertiary} />
-              </View>
-              <Text style={styles.emptyText}>No territories yet</Text>
-              <Text style={styles.emptySubtext}>Start running to conquer areas!</Text>
-            </View>
-          ) : (
-            userTerritories.map((territory) => (
-              <TouchableOpacity key={territory.id} style={styles.territoryItem} activeOpacity={0.7}>
-                <View style={[styles.territoryColor, { backgroundColor: territory.color }]} />
-                <View style={styles.territoryInfo}>
-                  <Text style={styles.territoryName}>{territory.name}</Text>
-                  <View style={styles.territoryMeta}>
-                    <Text style={styles.territoryArea}>{territory.area.toFixed(2)} km²</Text>
-                    <View style={styles.territoryPoints}>
-                      <Zap size={12} color={Colors.warning} />
-                      <Text style={styles.territoryPointsText}>{territory.pointsValue}</Text>
-                    </View>
-                  </View>
-                </View>
-                <ChevronRight size={18} color={Colors.textTertiary} />
-              </TouchableOpacity>
-            ))
-          )}
+        {/* Menu Items */}
+        <View style={styles.menuSection}>
+          <MenuItem icon={<Star size={18} color={LIME} />} label="Rate the App" />
+          <MenuItem icon={<Lock size={18} color={LIME} />} label="Privacy Policy" />
+          <MenuItem icon={<FileText size={18} color={LIME} />} label="Terms of Service" />
         </View>
 
-        <View style={styles.menuSection}>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Privacy Policy</Text>
-            <ChevronRight size={18} color={Colors.textTertiary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Terms of Service</Text>
-            <ChevronRight size={18} color={Colors.textTertiary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Help & Support</Text>
-            <ChevronRight size={18} color={Colors.textTertiary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.menuItem, styles.logoutItem]} onPress={handleLogout}>
-            <LogOut size={18} color={Colors.error} />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Log Out */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.85}>
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
-function StatCard({ icon, value, label, color }: { icon: React.ReactNode; value: string; label: string; color: string }) {
+function MenuItem({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <View style={styles.statCard}>
-      <View style={[styles.statIcon, { backgroundColor: color + '12' }]}>
-        {icon}
-      </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function BadgeItem({ badge }: { badge: typeof BADGES[0] }) {
-  const IconComponent = badge.icon;
-  return (
-    <View style={[styles.badgeItem, !badge.unlocked && styles.badgeLocked]}>
-      <View style={[styles.badgeIcon, { backgroundColor: badge.unlocked ? badge.color + '18' : Colors.surface }]}>
-        <IconComponent size={20} color={badge.unlocked ? badge.color : Colors.textTertiary} />
-      </View>
-      <Text style={[styles.badgeName, !badge.unlocked && styles.badgeNameLocked]}>{badge.name}</Text>
-    </View>
+    <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+      <View style={styles.menuIconBox}>{icon}</View>
+      <Text style={styles.menuLabel}>{label}</Text>
+      <ChevronDown size={18} color={TEXT_MUTED} />
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: BG,
   },
-  scrollView: {
-    flex: 1,
-  },
-  headerGradient: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
-  headerActions: {
+
+  // Header
+  header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
   },
-  settingsButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: Colors.surface,
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: SURFACE,
+    borderWidth: 1,
+    borderColor: BORDER_DEFAULT,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
-  profileHeader: {
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: TEXT_PRIMARY,
+  },
+
+  scrollContent: {
+    paddingHorizontal: 20,
+  },
+
+  // Profile Row
+  profileRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
+    marginBottom: 20,
+    marginTop: 4,
   },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: 14,
+  avatarWrap: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: LIME,
   },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 3,
-    borderColor: Colors.primary,
+    width: 90,
+    height: 90,
   },
   avatarPlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 90,
+    height: 90,
+    backgroundColor: SURFACE,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: {
-    fontSize: 36,
+  avatarInitial: {
+    fontSize: 34,
     fontWeight: '700' as const,
-    color: Colors.background,
+    color: LIME,
   },
-  levelRing: {
-    position: 'absolute',
-    bottom: -4,
-    left: '50%',
-    marginLeft: -18,
-    width: 36,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: Colors.background,
-  },
-  levelRingText: {
-    fontSize: 12,
-    fontWeight: '800' as const,
-    color: Colors.background,
-  },
-  premiumBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.warning,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: Colors.background,
+  profileInfo: {
+    flex: 1,
+    gap: 6,
   },
   userName: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800' as const,
-    color: Colors.text,
-    marginBottom: 8,
+    color: TEXT_PRIMARY,
   },
-  titleTag: {
+  userGroups: {
+    fontSize: 14,
+    color: TEXT_SECONDARY,
+    lineHeight: 20,
+  },
+  groupsLabel: {
+    color: TEXT_SECONDARY,
+    fontWeight: '600' as const,
+  },
+
+  // Stats
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.warningMuted,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  titleText: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: Colors.warning,
-  },
-  xpCard: {
-    marginHorizontal: 20,
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    gap: 12,
+    backgroundColor: SURFACE,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: BORDER_DEFAULT,
+    padding: 14,
   },
-  xpHeader: {
+  statIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: LIME + '18',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statContent: {
+    flex: 1,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    lineHeight: 16,
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: '800' as const,
+    color: TEXT_PRIMARY,
+    marginTop: 2,
+  },
+
+  // Premium Card
+  premiumCard: {
+    backgroundColor: '#0D1A08',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: GOLD_BORDER,
+    padding: 18,
+    marginBottom: 20,
+  },
+  premiumTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  xpInfo: {
+  premiumTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  xpText: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: Colors.text,
-  },
-  xpToNext: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: Colors.backgroundTertiary,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    gap: 10,
-    marginBottom: 24,
-  },
-  statCard: {
-    width: '48%',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
+    gap: 6,
+    backgroundColor: GOLD_BG,
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '800' as const,
-    color: Colors.text,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 4,
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginBottom: 14,
-  },
-  countBadge: {
-    backgroundColor: Colors.surface,
+    borderColor: GOLD_BORDER,
+    borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 10,
   },
-  countText: {
+  premiumTagText: {
     fontSize: 13,
     fontWeight: '700' as const,
-    color: Colors.textSecondary,
+    color: GOLD_LIGHT,
   },
-  badgesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  badgeItem: {
-    width: '23%',
-    alignItems: 'center',
-    padding: 10,
-  },
-  badgeLocked: {
-    opacity: 0.5,
-  },
-  badgeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  badgeName: {
-    fontSize: 11,
-    fontWeight: '600' as const,
-    color: Colors.text,
-    textAlign: 'center',
-  },
-  badgeNameLocked: {
-    color: Colors.textTertiary,
-  },
-  premiumCard: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  premiumGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
+  premiumMedal: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: GOLD_BG,
     borderWidth: 1,
-    borderColor: Colors.warning + '25',
-    borderRadius: 16,
-  },
-  premiumContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  premiumIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: Colors.warningMuted,
+    borderColor: GOLD_BORDER,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  premiumText: {},
   premiumTitle: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    color: Colors.text,
-  },
-  premiumDescription: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 36,
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  emptyIconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.backgroundTertiary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: Colors.textSecondary,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    color: Colors.textTertiary,
-    marginTop: 4,
-  },
-  territoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  territoryColor: {
-    width: 5,
-    height: 40,
-    borderRadius: 3,
-    marginRight: 14,
-  },
-  territoryInfo: {
-    flex: 1,
-  },
-  territoryName: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: Colors.text,
+    fontSize: 22,
+    fontWeight: '800' as const,
+    color: TEXT_PRIMARY,
     marginBottom: 4,
   },
-  territoryMeta: {
-    flexDirection: 'row',
+  premiumSubtitle: {
+    fontSize: 14,
+    color: TEXT_SECONDARY,
+    marginBottom: 16,
+  },
+  upgradeButton: {
+    backgroundColor: GOLD,
+    borderRadius: 8,
+    paddingVertical: 14,
     alignItems: 'center',
-    gap: 12,
   },
-  territoryArea: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+  upgradeButtonText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#1A0F00',
   },
-  territoryPoints: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  territoryPointsText: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: Colors.warning,
-  },
+
+  // Menu
   menuSection: {
-    paddingHorizontal: 20,
+    gap: 10,
+    marginBottom: 24,
   },
   menuItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    gap: 14,
+    backgroundColor: SURFACE,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: BORDER_DEFAULT,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
   },
-  menuText: {
-    fontSize: 15,
-    color: Colors.text,
+  menuIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: LIME + '18',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  logoutItem: {
-    justifyContent: 'flex-start',
-    gap: 10,
-    borderBottomWidth: 0,
-    marginTop: 10,
+  menuLabel: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: TEXT_PRIMARY,
+  },
+
+  // Logout
+  logoutButton: {
+    backgroundColor: RED,
+    borderRadius: 8,
+    paddingVertical: 18,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   logoutText: {
-    fontSize: 15,
-    color: Colors.error,
-    fontWeight: '600' as const,
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: TEXT_PRIMARY,
   },
 });
