@@ -1,10 +1,16 @@
 import { Tabs, useRouter } from 'expo-router';
 import { Map, Trophy, Users, User, Play } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, Platform, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Platform, View, TouchableOpacity, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
+
+const BG_TAB = '#182414';
+const ACTIVE_TINT = '#B8E030';
+const INACTIVE_TINT = '#6A7A6A';
+const ACTIVE_ICON_BG = '#2A3D1E';
+const LIME = '#B8E030';
+const LIME_TEXT = '#0B1A0B';
 
 function RunButton() {
   const router = useRouter();
@@ -20,14 +26,11 @@ function RunButton() {
   };
 
   return (
-    <TouchableOpacity
-      style={styles.runButton}
-      onPress={handlePress}
-      activeOpacity={0.85}
-    >
-      <View style={styles.runButtonInner}>
-        <Play size={26} color={Colors.background} fill={Colors.background} />
+    <TouchableOpacity style={styles.runButton} onPress={handlePress} activeOpacity={0.85}>
+      <View style={styles.runButtonCircle}>
+        <Play size={26} color={LIME_TEXT} fill={LIME_TEXT} />
       </View>
+      <Text style={styles.runButtonLabel}>Start Run</Text>
     </TouchableOpacity>
   );
 }
@@ -36,8 +39,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textTertiary,
+        tabBarActiveTintColor: ACTIVE_TINT,
+        tabBarInactiveTintColor: INACTIVE_TINT,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarItemStyle: styles.tabBarItem,
@@ -45,23 +48,23 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Map',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Map size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="rankings"
         options={{
           title: 'Rankings',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
               <Trophy size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Map',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
+              <Map size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
             </View>
           ),
         }}
@@ -102,28 +105,30 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderTopColor: Colors.border,
-    borderTopWidth: 1,
-    paddingTop: 8,
+    backgroundColor: BG_TAB,
+    borderTopWidth: 0,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 6,
     height: Platform.OS === 'ios' ? 88 : 68,
+    position: 'absolute',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -8 },
-        shadowOpacity: 0.15,
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.3,
         shadowRadius: 12,
       },
       android: {
-        elevation: 12,
+        elevation: 16,
       },
     }),
   },
   tabBarLabel: {
     fontSize: 11,
     fontWeight: '600' as const,
-    marginTop: 4,
-    letterSpacing: 0.3,
+    marginTop: 2,
+    letterSpacing: 0.2,
   },
   tabBarItem: {
     paddingTop: 4,
@@ -133,37 +138,44 @@ const styles = StyleSheet.create({
     height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 8,
   },
   iconContainerActive: {
-    backgroundColor: Colors.primaryMuted,
+    backgroundColor: ACTIVE_ICON_BG,
   },
+
+  // Run button
   runButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingTop: 0,
   },
-  runButtonInner: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: Colors.primary,
+  runButtonCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: LIME,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -22,
-    borderWidth: 3,
-    borderColor: Colors.backgroundSecondary,
+    marginTop: -28,
     ...Platform.select({
       ios: {
-        shadowColor: Colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.5,
-        shadowRadius: 10,
+        shadowColor: LIME,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.7,
+        shadowRadius: 16,
       },
       android: {
-        elevation: 8,
+        elevation: 10,
       },
     }),
+  },
+  runButtonLabel: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: LIME,
+    marginTop: 4,
+    letterSpacing: 0.2,
   },
 });
