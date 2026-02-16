@@ -19,10 +19,8 @@ import {
   FileText,
   Trophy,
   MapPin,
-  LogOut,
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
-import { getLevelInfo } from '@/constants/levels';
 
 const BG = '#0B1A0B';
 const SURFACE = '#0F220F';
@@ -31,7 +29,6 @@ const TEXT_PRIMARY = '#FFFFFF';
 const TEXT_SECONDARY = '#7A9A7A';
 const TEXT_MUTED = '#4A6A4A';
 const LIME = '#B8E030';
-const LIME_TEXT = '#0B1A0B';
 const GOLD = '#C8960C';
 const GOLD_LIGHT = '#F0C040';
 const GOLD_BG = '#1A1400';
@@ -41,9 +38,8 @@ const RED = '#E05A4B';
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, logout, userTerritories } = useApp();
+  const { user, logout } = useApp();
 
-  const levelInfo = user ? getLevelInfo(user.xp) : null;
   const badgesEarned = 15;
 
   const handleLogout = () => {
