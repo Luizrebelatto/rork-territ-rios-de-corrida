@@ -3,13 +3,18 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, Polygon, PROVIDER_GOOGLE } from 'react-native-maps';
-import { Zap, Target, Navigation, Grid3x3, Crosshair, Shield, Swords } from 'lucide-react-native';
+import { Zap, LayoutGrid, Navigation, Route, Shield, Swords, Crosshair } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { DEFAULT_LOCATION } from '@/mocks/data';
 import { Territory } from '@/types';
+
+const LIME = '#B8E030';
+const BG = '#0B1A0B';
+const SURFACE = '#0F220F';
+const BORDER = '#1E361E';
 
 
 
@@ -90,7 +95,7 @@ export default function HomeScreen() {
       </MapView>
 
       <LinearGradient
-        colors={['rgba(10,10,15,0.95)', 'rgba(10,10,15,0.6)', 'transparent']}
+        colors={['rgba(11,26,11,0.97)', 'rgba(11,26,11,0.6)', 'transparent']}
         style={[styles.topGradient, { paddingTop: insets.top }]}
       >
         <View style={styles.topBar}>
@@ -101,30 +106,30 @@ export default function HomeScreen() {
             <View style={styles.userStats}>
               <Text style={styles.userName}>{user?.name || 'Runner'}</Text>
               <View style={styles.pointsRow}>
-                <Zap size={12} color={Colors.warning} />
+                <Zap size={12} color={Colors.warning} fill={Colors.warning} />
                 <Text style={styles.pointsText}>{(user?.totalPoints || 0).toLocaleString()}</Text>
               </View>
             </View>
           </View>
 
           <TouchableOpacity style={styles.locationButton} onPress={centerOnUser}>
-            <Navigation size={20} color={Colors.primary} />
+            <Navigation size={20} color={LIME} fill={LIME} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.statsBar}>
-          <StatPill 
-            icon={<Grid3x3 size={14} color={Colors.primary} />}
+          <StatPill
+            icon={<LayoutGrid size={14} color={LIME} />}
             value={userTerritoryCount.toString()}
             label="Zones"
           />
-          <StatPill 
-            icon={<Target size={14} color={Colors.secondary} />}
+          <StatPill
+            icon={<Crosshair size={14} color={LIME} />}
             value={totalArea.toFixed(2)}
             label="km²"
           />
-          <StatPill 
-            icon={<Crosshair size={14} color={Colors.accent} />}
+          <StatPill
+            icon={<Route size={14} color={LIME} />}
             value={(user?.totalDistance || 0).toFixed(1)}
             label="km"
           />
@@ -241,16 +246,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: Colors.primaryMuted,
+    backgroundColor: SURFACE,
     borderWidth: 2,
-    borderColor: Colors.primary,
+    borderColor: LIME,
     justifyContent: 'center',
     alignItems: 'center',
   },
   levelText: {
     fontSize: 12,
     fontWeight: '800' as const,
-    color: Colors.primary,
+    color: LIME,
     letterSpacing: 0.5,
   },
   userStats: {
@@ -275,11 +280,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: Colors.surface,
+    backgroundColor: SURFACE,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: BORDER,
   },
   statsBar: {
     flexDirection: 'row',
@@ -289,12 +294,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.surface,
+    backgroundColor: SURFACE,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: BORDER,
   },
   statPillValue: {
     fontSize: 15,
@@ -304,7 +309,7 @@ const styles = StyleSheet.create({
   statPillLabel: {
     fontSize: 12,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: '#7A9A7A',
   },
   territoryMarker: {
     width: 22,
