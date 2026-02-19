@@ -2,10 +2,21 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Modal, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Users, Plus, Search, MapPin, Zap, Crown, X, Check, Medal } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { Group } from '@/types';
+
+const BG = '#0B1A0B';
+const SURFACE = '#0F220F';
+const BORDER = '#1E361E';
+const TEXT_PRIMARY = '#FFFFFF';
+const TEXT_SECONDARY = '#7A9A7A';
+const TEXT_MUTED = '#4A6A4A';
+const LIME = '#B8E030';
+const GOLD = '#C8960C';
+const GOLD_LIGHT = '#F0C040';
+const SILVER = '#9EA3A8';
+const BRONZE = '#8B5E3C';
 
 export default function GroupsScreen() {
   const insets = useSafeAreaInsets();
@@ -14,43 +25,41 @@ export default function GroupsScreen() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
-  const filteredGroups = groups.filter(g => 
+  const filteredGroups = groups.filter(g =>
     g.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const myGroups = groups.filter(g => 
+  const myGroups = groups.filter(g =>
     g.members.some(m => m.userId === user?.id)
   );
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[Colors.backgroundSecondary, Colors.background]}
-        style={[styles.header, { paddingTop: insets.top + 16 }]}
-      >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>Groups</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.createButton}
             onPress={() => setShowCreateModal(true)}
           >
-            <Plus size={20} color={Colors.background} />
+            <Plus size={20} color={BG} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.searchContainer}>
-          <Search size={18} color={Colors.textSecondary} />
+          <Search size={18} color={TEXT_MUTED} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search groups..."
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={TEXT_MUTED}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
-      </LinearGradient>
+      </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
         showsVerticalScrollIndicator={false}
@@ -59,9 +68,9 @@ export default function GroupsScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>My Groups</Text>
             {myGroups.map((group) => (
-              <GroupCard 
-                key={group.id} 
-                group={group} 
+              <GroupCard
+                key={group.id}
+                group={group}
                 onPress={() => setSelectedGroup(group)}
                 isMember
               />
@@ -72,9 +81,9 @@ export default function GroupsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Discover Groups</Text>
           {filteredGroups.map((group) => (
-            <GroupCard 
-              key={group.id} 
-              group={group} 
+            <GroupCard
+              key={group.id}
+              group={group}
               onPress={() => setSelectedGroup(group)}
               isMember={myGroups.some(g => g.id === group.id)}
             />
@@ -82,22 +91,14 @@ export default function GroupsScreen() {
         </View>
       </ScrollView>
 
-      <Modal
-        visible={showCreateModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
+      <Modal visible={showCreateModal} animationType="slide" presentationStyle="pageSheet">
         <CreateGroupModal onClose={() => setShowCreateModal(false)} />
       </Modal>
 
-      <Modal
-        visible={!!selectedGroup}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
+      <Modal visible={!!selectedGroup} animationType="slide" presentationStyle="pageSheet">
         {selectedGroup && (
-          <GroupDetailModal 
-            group={selectedGroup} 
+          <GroupDetailModal
+            group={selectedGroup}
             onClose={() => setSelectedGroup(null)}
             isMember={myGroups.some(g => g.id === selectedGroup.id)}
           />
@@ -110,15 +111,15 @@ export default function GroupsScreen() {
 function GroupCard({ group, onPress, isMember }: { group: Group; onPress: () => void; isMember: boolean }) {
   return (
     <TouchableOpacity style={styles.groupCard} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.groupAvatar, { backgroundColor: group.color + '30' }]}>
-        <Users size={24} color={group.color} />
+      <View style={[styles.groupAvatar, { backgroundColor: group.color + '25' }]}>
+        <Users size={22} color={group.color} />
       </View>
       <View style={styles.groupInfo}>
         <View style={styles.groupNameRow}>
           <Text style={styles.groupName}>{group.name}</Text>
           {isMember && (
             <View style={styles.memberBadge}>
-              <Check size={12} color={Colors.primary} />
+              <Check size={11} color={LIME} />
             </View>
           )}
         </View>
@@ -128,11 +129,11 @@ function GroupCard({ group, onPress, isMember }: { group: Group; onPress: () => 
       </View>
       <View style={styles.groupStats}>
         <View style={styles.groupStat}>
-          <Zap size={14} color={Colors.primary} />
+          <Zap size={13} color={LIME} fill={LIME} />
           <Text style={styles.groupStatValue}>{group.totalPoints}</Text>
         </View>
         <View style={styles.groupStat}>
-          <MapPin size={14} color={Colors.secondary} />
+          <MapPin size={13} color={LIME} />
           <Text style={styles.groupStatValue}>{group.territoriesCount}</Text>
         </View>
       </View>
@@ -154,8 +155,8 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
   return (
     <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
       <View style={styles.modalHeader}>
-        <TouchableOpacity onPress={onClose}>
-          <X size={24} color={Colors.textSecondary} />
+        <TouchableOpacity style={styles.modalCloseBtn} onPress={onClose}>
+          <X size={20} color={TEXT_PRIMARY} />
         </TouchableOpacity>
         <Text style={styles.modalTitle}>Create Group</Text>
         <TouchableOpacity onPress={handleCreate} disabled={!name.trim()}>
@@ -169,7 +170,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
           <TextInput
             style={styles.textInput}
             placeholder="Enter group name"
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={TEXT_MUTED}
             value={name}
             onChangeText={setName}
           />
@@ -180,7 +181,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
           <TextInput
             style={[styles.textInput, styles.textArea]}
             placeholder="What is this group about?"
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={TEXT_MUTED}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -201,7 +202,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
                 ]}
                 onPress={() => setSelectedColor(color)}
               >
-                {selectedColor === color && <Check size={18} color={Colors.background} />}
+                {selectedColor === color && <Check size={18} color={BG} />}
               </TouchableOpacity>
             ))}
           </View>
@@ -228,11 +229,11 @@ function GroupDetailModal({ group, onClose, isMember }: { group: Group; onClose:
   return (
     <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
       <View style={styles.modalHeader}>
-        <TouchableOpacity onPress={onClose}>
-          <X size={24} color={Colors.textSecondary} />
+        <TouchableOpacity style={styles.modalCloseBtn} onPress={onClose}>
+          <X size={20} color={TEXT_PRIMARY} />
         </TouchableOpacity>
         <Text style={styles.modalTitle}>{group.name}</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
@@ -241,10 +242,12 @@ function GroupDetailModal({ group, onClose, isMember }: { group: Group; onClose:
             <Text style={styles.groupDetailStatValue}>{group.memberCount}</Text>
             <Text style={styles.groupDetailStatLabel}>Membros</Text>
           </View>
+          <View style={styles.groupDetailStatDivider} />
           <View style={styles.groupDetailStat}>
             <Text style={styles.groupDetailStatValue}>{group.totalPoints.toLocaleString()}</Text>
             <Text style={styles.groupDetailStatLabel}>Pontos</Text>
           </View>
+          <View style={styles.groupDetailStatDivider} />
           <View style={styles.groupDetailStat}>
             <Text style={styles.groupDetailStatValue}>{group.territoriesCount}</Text>
             <Text style={styles.groupDetailStatLabel}>Territórios</Text>
@@ -254,7 +257,7 @@ function GroupDetailModal({ group, onClose, isMember }: { group: Group; onClose:
         {top3.length > 0 && (
           <View style={styles.podium}>
             {top3.map((member, index) => (
-              <GroupPodiumItem key={member.userId} member={member} position={index + 1} groupColor={group.color} />
+              <GroupPodiumItem key={member.userId} member={member} position={index + 1} />
             ))}
           </View>
         )}
@@ -270,8 +273,8 @@ function GroupDetailModal({ group, onClose, isMember }: { group: Group; onClose:
           <View style={styles.membersSection}>
             <Text style={styles.membersSectionTitle}>Ranking do Grupo</Text>
             {rest.map((member) => (
-              <GroupMemberRankRow 
-                key={member.userId} 
+              <GroupMemberRankRow
+                key={member.userId}
                 member={member}
                 isCurrentUser={member.userId === user?.id}
               />
@@ -283,12 +286,7 @@ function GroupDetailModal({ group, onClose, isMember }: { group: Group; onClose:
       {!isMember && (
         <View style={[styles.joinButtonContainer, { paddingBottom: insets.bottom + 16 }]}>
           <TouchableOpacity style={styles.joinButton} onPress={handleJoin}>
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryDark]}
-              style={styles.joinButtonGradient}
-            >
-              <Text style={styles.joinButtonText}>Entrar no Grupo</Text>
-            </LinearGradient>
+            <Text style={styles.joinButtonText}>Entrar no Grupo</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -296,13 +294,13 @@ function GroupDetailModal({ group, onClose, isMember }: { group: Group; onClose:
   );
 }
 
-function GroupPodiumItem({ member, position, groupColor }: { member: Group['members'][0] & { rank: number }; position: number; groupColor: string }) {
-  const height = position === 1 ? 100 : position === 2 ? 80 : 60;
-  const iconColor = position === 1 ? Colors.warning : position === 2 ? '#C0C0C0' : '#CD7F32';
+function GroupPodiumItem({ member, position }: { member: Group['members'][0] & { rank: number }; position: number }) {
+  const barHeight = position === 1 ? 100 : position === 2 ? 78 : 58;
+  const badgeColor = position === 1 ? GOLD : position === 2 ? SILVER : BRONZE;
   const Icon = position === 1 ? Crown : Medal;
-  
+
   return (
-    <View style={[styles.podiumItem, { order: position === 1 ? 0 : position === 2 ? -1 : 1 }]}>
+    <View style={[styles.podiumItem, position === 2 && { marginBottom: 22 }, position === 3 && { marginBottom: 42 }]}>
       <View style={styles.podiumAvatar}>
         {member.userAvatar ? (
           <Image source={{ uri: member.userAvatar }} style={styles.avatarImage} />
@@ -311,23 +309,20 @@ function GroupPodiumItem({ member, position, groupColor }: { member: Group['memb
             <Text style={styles.avatarText}>{member.userName[0]}</Text>
           </View>
         )}
-        <View style={[styles.podiumBadge, { backgroundColor: iconColor }]}>
-          <Icon size={12} color={Colors.background} fill={Colors.background} />
+        <View style={[styles.podiumBadge, { backgroundColor: badgeColor }]}>
+          <Icon size={11} color={BG} fill={BG} />
         </View>
         {member.role === 'owner' && (
           <View style={styles.ownerBadge}>
-            <Crown size={10} color={Colors.warning} fill={Colors.warning} />
+            <Crown size={10} color={GOLD_LIGHT} fill={GOLD_LIGHT} />
           </View>
         )}
       </View>
       <Text style={styles.podiumName} numberOfLines={1}>{member.userName}</Text>
       <Text style={styles.podiumPoints}>{member.points.toLocaleString()} pts</Text>
-      <LinearGradient
-        colors={[iconColor + '40', iconColor + '20']}
-        style={[styles.podiumBar, { height }]}
-      >
-        <Text style={styles.podiumPosition}>#{position}</Text>
-      </LinearGradient>
+      <View style={[styles.podiumBar, { height: barHeight, backgroundColor: badgeColor + '30', borderTopColor: badgeColor + '60' }]}>
+        <Text style={[styles.podiumPosition, { color: badgeColor }]}>#{position}</Text>
+      </View>
     </View>
   );
 }
@@ -335,9 +330,7 @@ function GroupPodiumItem({ member, position, groupColor }: { member: Group['memb
 function GroupMemberRankRow({ member, isCurrentUser = false }: { member: Group['members'][0] & { rank: number }; isCurrentUser?: boolean }) {
   return (
     <View style={[styles.rankingRow, isCurrentUser && styles.currentUserRow]}>
-      <View style={styles.rankBadge}>
-        <Text style={styles.rankText}>#{member.rank}</Text>
-      </View>
+      <Text style={styles.rankText}>#{member.rank}</Text>
       <View style={styles.rankAvatar}>
         {member.userAvatar ? (
           <Image source={{ uri: member.userAvatar }} style={styles.smallAvatarImage} />
@@ -351,7 +344,7 @@ function GroupMemberRankRow({ member, isCurrentUser = false }: { member: Group['
         <View style={styles.rankNameRow}>
           <Text style={styles.rankName}>{member.userName}</Text>
           {member.role === 'owner' && (
-            <Crown size={12} color={Colors.warning} fill={Colors.warning} />
+            <Crown size={12} color={GOLD_LIGHT} fill={GOLD_LIGHT} />
           )}
         </View>
         <Text style={styles.rankRole}>
@@ -369,10 +362,13 @@ function GroupMemberRankRow({ member, isCurrentUser = false }: { member: Group['
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: BG,
   },
+
+  // Header
   header: {
     paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 16,
   },
   headerRow: {
@@ -384,61 +380,71 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
   },
   createButton: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.primary,
+    borderRadius: 10,
+    backgroundColor: LIME,
     justifyContent: 'center',
     alignItems: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
+    backgroundColor: SURFACE,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: BORDER,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
     gap: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    color: Colors.text,
+    fontSize: 15,
+    color: TEXT_PRIMARY,
   },
   scrollView: {
     flex: 1,
   },
+
+  // Sections
   section: {
     paddingHorizontal: 20,
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: TEXT_SECONDARY,
     marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
+
+  // Group Card
   groupCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
+    backgroundColor: SURFACE,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
     padding: 14,
-    marginBottom: 10,
+    marginBottom: 8,
+    gap: 12,
   },
   groupAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   groupInfo: {
     flex: 1,
-    marginLeft: 12,
   },
   groupNameRow: {
     flexDirection: 'row',
@@ -446,25 +452,26 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   groupName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
   },
   memberBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: Colors.primary + '20',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: LIME + '25',
     justifyContent: 'center',
     alignItems: 'center',
   },
   groupDescription: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: TEXT_SECONDARY,
     marginTop: 2,
   },
   groupStats: {
-    gap: 8,
+    gap: 6,
+    alignItems: 'flex-end',
   },
   groupStat: {
     flexDirection: 'row',
@@ -474,56 +481,72 @@ const styles = StyleSheet.create({
   groupStatValue: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
   },
+
+  // Modal
   modalContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: BG,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: BORDER,
+  },
+  modalCloseBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: SURFACE,
+    borderWidth: 1,
+    borderColor: BORDER,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
   },
   createText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LIME,
   },
   createTextDisabled: {
-    color: Colors.textTertiary,
+    color: TEXT_MUTED,
   },
   modalContent: {
     flex: 1,
     padding: 20,
   },
+
+  // Inputs
   inputGroup: {
     marginBottom: 24,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: TEXT_SECONDARY,
     marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   textInput: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
+    backgroundColor: SURFACE,
+    borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: BORDER,
   },
   textArea: {
     height: 100,
@@ -543,114 +566,50 @@ const styles = StyleSheet.create({
   },
   colorSelected: {
     borderWidth: 3,
-    borderColor: Colors.text,
+    borderColor: TEXT_PRIMARY,
   },
-  groupDetailHeader: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  groupDetailAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  groupDetailName: {
-    fontSize: 24,
-    fontWeight: '800' as const,
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  groupDetailDescription: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
+
+  // Group Detail Stats
   groupDetailStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
+    alignItems: 'center',
+    backgroundColor: SURFACE,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   groupDetailStat: {
     alignItems: 'center',
+    flex: 1,
+  },
+  groupDetailStatDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: BORDER,
   },
   groupDetailStatValue: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
   },
   groupDetailStatLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: TEXT_SECONDARY,
     marginTop: 4,
   },
-  membersSection: {
-    marginBottom: 24,
-  },
-  membersSectionTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginBottom: 16,
-  },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  memberAvatar: {
-    marginRight: 12,
-  },
-  memberAvatarImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  memberAvatarPlaceholder: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  memberAvatarText: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: Colors.primary,
-  },
-  memberInfo: {
-    flex: 1,
-  },
-  memberNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  memberName: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: Colors.text,
-  },
-  memberPoints: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
+
+  // Podium
   podium: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-end',
     paddingHorizontal: 10,
-    paddingTop: 20,
-    paddingBottom: 30,
-    gap: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
+    gap: 12,
   },
   podiumItem: {
     alignItems: 'center',
@@ -669,121 +628,141 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.surface,
+    backgroundColor: SURFACE,
+    borderWidth: 1,
+    borderColor: BORDER,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: Colors.primary,
+    color: LIME,
   },
   podiumBadge: {
     position: 'absolute',
     bottom: -4,
     right: -4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.background,
+    borderColor: BG,
   },
   ownerBadge: {
     position: 'absolute',
     top: -4,
-    right: -4,
+    left: -4,
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: Colors.warning + '30',
+    backgroundColor: GOLD + '30',
+    borderWidth: 1.5,
+    borderColor: GOLD,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.background,
   },
   podiumName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
     marginBottom: 2,
     maxWidth: 80,
+    textAlign: 'center',
   },
   podiumPoints: {
-    fontSize: 12,
-    color: Colors.textSecondary,
+    fontSize: 11,
+    color: TEXT_SECONDARY,
     marginBottom: 8,
   },
   podiumBar: {
     width: '100%',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+    borderTopWidth: 2,
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingTop: 8,
   },
   podiumPosition: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800' as const,
-    color: Colors.text,
   },
+
+  // User rank
   userRankCard: {
-    marginBottom: 20,
-    backgroundColor: Colors.primary + '15',
-    borderRadius: 16,
-    padding: 16,
+    marginBottom: 16,
+    backgroundColor: LIME + '12',
+    borderRadius: 12,
+    padding: 14,
     borderWidth: 1,
-    borderColor: Colors.primary + '30',
+    borderColor: LIME + '30',
   },
   userRankLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LIME,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  // Members list
+  membersSection: {
+    marginBottom: 24,
+  },
+  membersSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: TEXT_SECONDARY,
     marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   rankingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: SURFACE,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     marginBottom: 8,
+    gap: 12,
   },
   currentUserRow: {
-    backgroundColor: Colors.primary + '15',
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
-  },
-  rankBadge: {
-    width: 36,
-    alignItems: 'center',
+    backgroundColor: LIME + '12',
+    borderColor: LIME + '40',
   },
   rankText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700' as const,
-    color: Colors.textSecondary,
+    color: TEXT_MUTED,
+    width: 28,
   },
-  rankAvatar: {
-    marginRight: 12,
-  },
+  rankAvatar: {},
   smallAvatarImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
   },
   smallAvatarPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.backgroundSecondary,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: BG,
+    borderWidth: 1,
+    borderColor: BORDER,
     justifyContent: 'center',
     alignItems: 'center',
   },
   smallAvatarText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: Colors.primary,
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: LIME,
   },
   rankInfo: {
     flex: 1,
@@ -796,43 +775,47 @@ const styles = StyleSheet.create({
   rankName: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
   },
   rankRole: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    marginTop: 1,
   },
   rankStats: {
     alignItems: 'flex-end',
   },
   rankPoints: {
     fontSize: 17,
-    fontWeight: '700' as const,
-    color: Colors.primary,
+    fontWeight: '800' as const,
+    color: LIME,
   },
   rankPointsLabel: {
     fontSize: 11,
-    color: Colors.textTertiary,
+    color: TEXT_MUTED,
   },
+
+  // Join button
   joinButtonContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: 20,
-    backgroundColor: Colors.background,
+    paddingTop: 12,
+    backgroundColor: BG,
+    borderTopWidth: 1,
+    borderTopColor: BORDER,
   },
   joinButton: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  joinButtonGradient: {
-    paddingVertical: 16,
+    backgroundColor: LIME,
+    borderRadius: 10,
+    paddingVertical: 17,
     alignItems: 'center',
   },
   joinButtonText: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.background,
+    color: BG,
   },
 });
