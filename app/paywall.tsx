@@ -1,12 +1,23 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, Crown, MapPin, BarChart3, Users, Infinity, Check } from 'lucide-react-native';
-import Colors from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { FREE_TERRITORY_LIMIT } from '@/constants/levels';
+
+const BG = '#0B1A0B';
+const SURFACE = '#0F220F';
+const BORDER_DEFAULT = '#1E361E';
+const BORDER_LIGHT = '#2A4A2A';
+const TEXT_PRIMARY = '#FFFFFF';
+const TEXT_SECONDARY = '#7A9A7A';
+const TEXT_MUTED = '#4A6A4A';
+const LIME = '#B8E030';
+const GOLD = '#C8960C';
+const GOLD_LIGHT = '#F0C040';
+const GOLD_BG = '#1A1400';
+const GOLD_BORDER = '#8B6914';
 
 const PREMIUM_FEATURES = [
   { icon: Infinity, text: 'Unlimited territories' },
@@ -30,52 +41,55 @@ export default function PaywallScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[Colors.backgroundSecondary, Colors.background]}
-        style={StyleSheet.absoluteFill}
-      />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={{ width: 40 }} />
+        <Text style={styles.headerTitle}>Go Premium</Text>
+        <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+          <X size={20} color={TEXT_PRIMARY} />
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity 
-        style={[styles.closeButton, { top: insets.top + 16 }]}
-        onPress={() => router.back()}
-      >
-        <X size={24} color={Colors.textSecondary} />
-      </TouchableOpacity>
-
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <LinearGradient
-            colors={[Colors.warning, Colors.warning + 'CC']}
-            style={styles.crownBadge}
-          >
-            <Crown size={40} color={Colors.background} fill={Colors.background} />
-          </LinearGradient>
-          <Text style={styles.title}>Go Premium</Text>
-          <Text style={styles.subtitle}>
-            You have conquered {userTerritories.length} of {FREE_TERRITORY_LIMIT} free territories. 
-            Upgrade to unlock unlimited conquests!
-          </Text>
+        {/* Crown Badge */}
+        <View style={styles.crownWrap}>
+          <View style={styles.crownBadge}>
+            <Crown size={36} color={GOLD_BG} fill={GOLD_BG} />
+          </View>
         </View>
 
+        <Text style={styles.subtitle}>
+          You have conquered {userTerritories.length} of {FREE_TERRITORY_LIMIT} free territories.{'\n'}
+          Upgrade to unlock unlimited conquests!
+        </Text>
+
+        {/* Features */}
         <View style={styles.featuresContainer}>
           {PREMIUM_FEATURES.map((feature, index) => (
-            <View key={index} style={styles.featureRow}>
+            <View
+              key={index}
+              style={[
+                styles.featureRow,
+                index < PREMIUM_FEATURES.length - 1 && styles.featureRowBorder,
+              ]}
+            >
               <View style={styles.featureIcon}>
-                <feature.icon size={22} color={Colors.primary} />
+                <feature.icon size={20} color={LIME} />
               </View>
               <Text style={styles.featureText}>{feature.text}</Text>
-              <Check size={20} color={Colors.primary} />
+              <Check size={18} color={LIME} />
             </View>
           ))}
         </View>
 
+        {/* Pricing */}
         <View style={styles.pricingContainer}>
-          <TouchableOpacity style={styles.planCard} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.planCardSelected} activeOpacity={0.8}>
             <View style={styles.popularBadge}>
               <Text style={styles.popularText}>MOST POPULAR</Text>
             </View>
@@ -87,7 +101,7 @@ export default function PaywallScreen() {
             <Text style={styles.savings}>Save 50%</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.planCard, styles.planCardSecondary]} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.planCard} activeOpacity={0.8}>
             <Text style={styles.planDuration}>Monthly</Text>
             <View style={styles.priceRow}>
               <Text style={styles.price}>$4.99</Text>
@@ -96,17 +110,13 @@ export default function PaywallScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity 
+        {/* CTA Button */}
+        <TouchableOpacity
           style={styles.purchaseButton}
           onPress={handlePurchase}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
-          <LinearGradient
-            colors={[Colors.primary, Colors.primaryDark]}
-            style={styles.purchaseGradient}
-          >
-            <Text style={styles.purchaseText}>Start Free Trial</Text>
-          </LinearGradient>
+          <Text style={styles.purchaseText}>Start Free Trial</Text>
         </TouchableOpacity>
 
         <Text style={styles.trialInfo}>7-day free trial, then $29.99/year</Text>
@@ -126,16 +136,27 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: BG,
   },
-  closeButton: {
-    position: 'absolute',
-    right: 20,
-    zIndex: 10,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: TEXT_PRIMARY,
+  },
+  closeBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
+    borderRadius: 8,
+    backgroundColor: SURFACE,
+    borderWidth: 1,
+    borderColor: BORDER_DEFAULT,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -143,149 +164,153 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
   },
-  header: {
+  crownWrap: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 16,
+    marginTop: 8,
   },
   crownBadge: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: GOLD,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800' as const,
-    color: Colors.text,
-    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: GOLD_BORDER,
   },
   subtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
+    fontSize: 15,
+    color: TEXT_SECONDARY,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,
+    marginBottom: 24,
   },
   featuresContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: SURFACE,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: BORDER_DEFAULT,
+    paddingHorizontal: 16,
+    marginBottom: 20,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
+  },
+  featureRowBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: BORDER_DEFAULT,
   },
   featureIcon: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.primary + '15',
+    borderRadius: 10,
+    backgroundColor: LIME + '18',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
   featureText: {
     flex: 1,
-    fontSize: 16,
-    color: Colors.text,
+    fontSize: 15,
+    color: TEXT_PRIMARY,
     fontWeight: '500' as const,
   },
   pricingContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
+  },
+  planCardSelected: {
+    flex: 1,
+    backgroundColor: SURFACE,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 2,
+    borderColor: LIME,
+    position: 'relative',
+    paddingTop: 20,
   },
   planCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    position: 'relative',
-  },
-  planCardSecondary: {
-    borderColor: Colors.border,
+    backgroundColor: SURFACE,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: BORDER_DEFAULT,
   },
   popularBadge: {
     position: 'absolute',
     top: -10,
     alignSelf: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: LIME,
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   popularText: {
     fontSize: 10,
     fontWeight: '700' as const,
-    color: Colors.background,
+    color: BG,
   },
   planDuration: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: 13,
+    color: TEXT_SECONDARY,
     marginBottom: 4,
-    marginTop: 8,
+    marginTop: 6,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   price: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: TEXT_PRIMARY,
   },
   period: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: 13,
+    color: TEXT_SECONDARY,
     marginLeft: 2,
   },
   savings: {
     fontSize: 13,
-    color: Colors.primary,
+    color: LIME,
     fontWeight: '600' as const,
     marginTop: 4,
   },
   purchaseButton: {
-    borderRadius: 14,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  purchaseGradient: {
+    backgroundColor: LIME,
+    borderRadius: 10,
     paddingVertical: 18,
     alignItems: 'center',
+    marginBottom: 12,
   },
   purchaseText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.background,
+    color: BG,
   },
   trialInfo: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: 13,
+    color: TEXT_SECONDARY,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   restoreText: {
-    fontSize: 15,
-    color: Colors.primary,
+    fontSize: 14,
+    color: LIME,
     textAlign: 'center',
     fontWeight: '500' as const,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   terms: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: TEXT_MUTED,
     textAlign: 'center',
     lineHeight: 18,
   },
