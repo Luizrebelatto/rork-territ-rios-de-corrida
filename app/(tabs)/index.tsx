@@ -12,7 +12,6 @@ import { DEFAULT_LOCATION } from '@/mocks/data';
 import { Territory } from '@/types';
 
 const LIME = '#B8E030';
-const BG = '#0B1A0B';
 const SURFACE = '#0F220F';
 const BORDER = '#1E361E';
 
