@@ -17,7 +17,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "app.rork.territorios-de-corrida",
       "config": {
-        "googleMapsApiKey": "AIzaSyDyGHObvGGw-N_VXKonUuTyq2TmVk6SzaE"
+        "googleMapsApiKey": "test"
       },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Este app precisa da sua localização para rastrear suas corridas e conquistar territórios.",
@@ -31,7 +31,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyDyGHObvGGw-N_VXKonUuTyq2TmVk6SzaE"
+          "apiKey": "test"
         }
       },
       "package": "app.rork.territorios_de_corrida",
